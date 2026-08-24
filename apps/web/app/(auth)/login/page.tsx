@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FileCode2, Lock, Mail, Loader2, Sparkles } from 'lucide-react';
+import { FileCode2, Lock, Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,24 +41,24 @@ export default function LoginPage() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setErrorMessage('Invalid email or password. If you haven\'t signed up yet, click "Create an account" below.');
+          setErrorMessage('Invalid email or password. Please verify your credentials or create an account.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setErrorMessage('Please confirm your email address before signing in.');
         } else {
           setErrorMessage(error.message);
         }
         return;
       }
 
-      router.push('/dashboard');
+      if (data.session) {
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : 'Failed to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDemoSignIn = () => {
-    setIsLoading(true);
-    router.push('/dashboard');
   };
 
   return (
@@ -100,6 +100,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="name@example.com"
                     className="pl-9 text-xs"
+                    autoComplete="email"
                   />
                 </div>
                 {errors.email && (
@@ -124,6 +125,7 @@ export default function LoginPage() {
                     type="password"
                     placeholder="••••••••"
                     className="pl-9 text-xs"
+                    autoComplete="current-password"
                   />
                 </div>
                 {errors.password && (
@@ -133,22 +135,6 @@ export default function LoginPage() {
 
               <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
-              </Button>
-
-              <div className="relative my-2 text-center text-xs after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-card px-2 text-muted-foreground text-[10px] uppercase font-mono">
-                  Or Test Platform
-                </span>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDemoSignIn}
-                className="w-full text-xs h-9 border-dashed"
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
-                Continue with Demo User
               </Button>
             </CardContent>
           </form>

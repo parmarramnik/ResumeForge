@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FileCode2, Lock, Mail, User, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { FileCode2, Lock, Mail, User, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,20 +48,30 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setErrorMessage(error.message);
+        if (error.message.includes('User already registered')) {
+          setErrorMessage('An account with this email already exists. Please sign in instead.');
+        } else {
+          setErrorMessage(error.message);
+        }
         return;
       }
 
-      // If Supabase has email confirmation enabled
+      // If session exists immediately -> Go directly to dashboard
+      if (data?.session) {
+        router.push('/dashboard');
+        router.refresh();
+        return;
+      }
+
+      // If email confirmation required -> Prompt user
       if (data?.user && !data.session) {
-        setSuccessMessage('Account created! Please check your email to confirm your account or sign in directly.');
-        setTimeout(() => router.push('/login'), 2000);
-        return;
+        setSuccessMessage('Account created! You can now sign in with your email and password.');
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       }
-
-      router.push('/dashboard');
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to register account.');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to register account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -110,8 +120,9 @@ export default function RegisterPage() {
                   <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     {...register('full_name')}
-                    placeholder="Alex Mercer"
+                    placeholder="Arjun Mehta"
                     className="pl-9 text-xs"
+                    autoComplete="name"
                   />
                 </div>
                 {errors.full_name && (
@@ -128,6 +139,7 @@ export default function RegisterPage() {
                     type="email"
                     placeholder="name@example.com"
                     className="pl-9 text-xs"
+                    autoComplete="email"
                   />
                 </div>
                 {errors.email && (
@@ -144,6 +156,7 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="••••••••"
                     className="pl-9 text-xs"
+                    autoComplete="new-password"
                   />
                 </div>
                 {errors.password && (
@@ -160,6 +173,7 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="••••••••"
                     className="pl-9 text-xs"
+                    autoComplete="new-password"
                   />
                 </div>
                 {errors.confirm_password && (

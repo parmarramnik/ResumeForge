@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Static assets and internal next paths
+  // Static assets, public files, and health checks
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/health') ||
@@ -19,8 +19,8 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -56,19 +56,15 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/profile') ||
     pathname.startsWith('/settings');
 
-  // If Supabase is placeholder / demo mode, allow access
-  const isDemoFallback = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder') || process.env.ENABLE_DEMO_AUTH === 'true';
+  // Strictly protect routes
+  if (!user && isProtectedRoute) {
+    const redirectUrl = new URL('/login', request.url);
+    redirectUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
 
-  if (!isDemoFallback) {
-    if (!user && isProtectedRoute) {
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    if (user && isAuthRoute) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+  if (user && isAuthRoute) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return response;
