@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FileCode2, Lock, Mail, User, Loader2 } from 'lucide-react';
+import { FileCode2, Lock, Mail, User, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       const supabase = createClient();
@@ -46,14 +48,20 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        // Local mode fallback
-        router.push('/dashboard');
+        setErrorMessage(error.message);
+        return;
+      }
+
+      // If Supabase has email confirmation enabled
+      if (data?.user && !data.session) {
+        setSuccessMessage('Account created! Please check your email to confirm your account or sign in directly.');
+        setTimeout(() => router.push('/login'), 2000);
         return;
       }
 
       router.push('/dashboard');
-    } catch {
-      router.push('/dashboard');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to register account.');
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +94,13 @@ export default function RegisterPage() {
               {errorMessage && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
                   {errorMessage}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>{successMessage}</span>
                 </div>
               )}
 
