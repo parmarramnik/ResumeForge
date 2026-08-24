@@ -1,30 +1,10 @@
-# Build stage for Tectonic LaTeX Engine & FastAPI Compiler
-FROM rust:1.83-slim-bookworm AS tectonic-builder
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libfontconfig1-dev \
-    libgraphite2-dev \
-    libharfbuzz-dev \
-    libicu-dev \
-    libssl-dev \
-    zlib1g-dev \
-    pkg-config \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN cargo install tectonic --locked
-
-# Final minimal execution stage
+# Multi-stage secure Dockerfile for LaTeX Compiler Service
 FROM python:3.11-slim-bookworm
 
-# Install runtime libraries for tectonic and latex fonts
+# Install runtime libraries, fonts, and LaTeX engines
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libfontconfig1 \
-    libgraphite2-3 \
-    libharfbuzz0b \
-    libicu72 \
-    libssl3 \
-    zlib1g \
+    curl \
+    ca-certificates \
     fontconfig \
     fonts-lmodern \
     fonts-texgyre \
@@ -32,11 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-recommended \
     texlive-latex-extra \
     texlive-plain-generic \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy tectonic from builder
-COPY --from=tectonic-builder /usr/local/cargo/bin/tectonic /usr/local/bin/tectonic
+# Install official precompiled standalone Tectonic binary
+RUN curl -fsSL https://drop-sh.fullyjustified.net | sh && \
+    mv tectonic /usr/local/bin/tectonic
 
 # Create isolated non-root user
 RUN groupadd -g 10001 sandboxgroup && \
@@ -51,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY src/ ./src/
 
-# Set sandbox permissions
+# Set permissions
 RUN chown -R sandboxuser:sandboxgroup /app /home/sandboxuser
 
 USER sandboxuser
@@ -62,4 +42,4 @@ ENV MAX_INPUT_BYTES=2097152
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "src/standalone_server.py"]
