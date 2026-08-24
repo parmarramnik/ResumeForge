@@ -10,22 +10,15 @@ import {
   LayoutDashboard,
   User,
   Settings,
-  ShieldAlert,
-  Layers,
-  Users,
-  Activity,
   FileCode2,
 } from 'lucide-react';
-import { UserRole } from '@resumeforge/shared-types';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 interface SidebarProps {
-  userRole?: UserRole;
   className?: string;
 }
 
-export function Sidebar({ userRole = 'USER', className }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
 
   const workspaceLinks = [
@@ -38,13 +31,6 @@ export function Sidebar({ userRole = 'USER', className }: SidebarProps) {
   const accountLinks = [
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Settings', href: '/settings', icon: Settings },
-  ];
-
-  const adminLinks = [
-    { name: 'Overview', href: '/admin/dashboard', icon: Activity },
-    { name: 'Templates', href: '/admin/templates', icon: Layers },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldAlert },
   ];
 
   const isActive = (href: string) => {
@@ -107,41 +93,6 @@ export function Sidebar({ userRole = 'USER', className }: SidebarProps) {
               })}
             </nav>
           </div>
-
-          {/* Admin Section (Strictly restricted to ADMIN role) */}
-          {userRole === 'ADMIN' && (
-            <div>
-              <div className="px-3 mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
-                  Admin Portal
-                </span>
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 uppercase font-mono">
-                  Staff
-                </Badge>
-              </div>
-              <nav className="space-y-1">
-                {adminLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                        active
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <span>{link.name}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
 
           {/* Account */}
           <div>

@@ -19,9 +19,12 @@ interface ResumePdfViewerProps {
   pdfUrl?: string | null;
   pdfBlob?: Blob | null;
   isCompiling?: boolean;
+  isLoading?: boolean;
   error?: string | null;
+  errorMessage?: string | null;
   className?: string;
   onRecompile?: () => void;
+  onRetry?: () => void;
   documentTitle?: string;
 }
 
@@ -29,11 +32,18 @@ export function ResumePdfViewer({
   pdfUrl,
   pdfBlob,
   isCompiling = false,
+  isLoading = false,
   error = null,
+  errorMessage = null,
   className,
   onRecompile,
+  onRetry,
   documentTitle = 'Resume',
 }: ResumePdfViewerProps) {
+  const compiling = isCompiling || isLoading;
+  const activeError = error || errorMessage;
+  const handleRetry = onRecompile || onRetry;
+
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(100);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -46,178 +56,162 @@ export function ResumePdfViewer({
       return () => {
         URL.revokeObjectURL(url);
       };
-    } else if (pdfUrl) {
-      setBlobUrl(pdfUrl);
     } else {
       setBlobUrl(null);
     }
-  }, [pdfBlob, pdfUrl]);
+  }, [pdfBlob]);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 15, 200));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 15, 50));
-  const handleZoomReset = () => setZoom(100);
+  const activeUrl = blobUrl || pdfUrl;
 
   const handleDownload = () => {
-    if (!blobUrl) return;
+    if (!activeUrl) return;
     const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = `${documentTitle.replace(/\s+/g, '_')}.pdf`;
+    a.href = activeUrl;
+    a.download = `${documentTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
-  const handleOpenExternal = () => {
-    if (!blobUrl) return;
-    window.open(blobUrl, '_blank');
+  const handleOpenInTab = () => {
+    if (!activeUrl) return;
+    window.open(activeUrl, '_blank');
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-slate-900/5 dark:bg-slate-950 border border-border rounded-lg overflow-hidden', className)}>
-      {/* Viewer Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-background/95 border-b border-border text-xs">
-        <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
-          <FileText className="w-4 h-4 text-primary" />
-          <span className="hidden sm:inline font-mono">PDF Preview</span>
-          {blobUrl && <span className="text-[11px] px-1.5 py-0.5 rounded bg-muted">Ready</span>}
+    <div className={cn('flex flex-col h-full bg-muted/40 border-l border-border select-none', className)}>
+      {/* Viewer Action Toolbar */}
+      <div className="h-10 px-4 border-b border-border bg-card/60 flex items-center justify-between text-xs shrink-0">
+        <div className="flex items-center gap-2 text-muted-foreground font-medium">
+          <FileText className="w-3.5 h-3.5 text-primary" />
+          <span>PDF Preview</span>
+          {compiling && (
+            <span className="flex items-center gap-1 text-[11px] text-primary animate-pulse ml-2 font-mono">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Rendering...
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* Zoom controls */}
-          <div className="flex items-center bg-muted/60 rounded-md p-0.5 border border-border/50">
+        {/* Zoom & Download Controls */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center border border-border rounded-md overflow-hidden bg-background">
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={handleZoomOut}
-              disabled={!blobUrl || zoom <= 50}
-              title="Zoom Out"
+              size="icon"
+              className="h-6 w-6 rounded-none text-muted-foreground hover:text-foreground"
+              onClick={() => setZoom((prev) => Math.max(50, prev - 15))}
+              disabled={!activeUrl}
+              title="Zoom out"
             >
-              <ZoomOut className="w-3.5 h-3.5" />
+              <ZoomOut className="w-3 h-3" />
             </Button>
-            <span className="px-2 text-[11px] font-mono min-w-[3rem] text-center font-medium">
+            <span className="px-2 text-[11px] font-mono text-muted-foreground min-w-[42px] text-center">
               {zoom}%
             </span>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={handleZoomIn}
-              disabled={!blobUrl || zoom >= 200}
-              title="Zoom In"
+              size="icon"
+              className="h-6 w-6 rounded-none text-muted-foreground hover:text-foreground"
+              onClick={() => setZoom((prev) => Math.min(180, prev + 15))}
+              disabled={!activeUrl}
+              title="Zoom in"
             >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={handleZoomReset}
-              disabled={!blobUrl || zoom === 100}
-              title="Reset Zoom"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <ZoomIn className="w-3 h-3" />
             </Button>
           </div>
 
-          {/* Action buttons */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => setZoom(100)}
+            disabled={!activeUrl}
+            title="Reset Zoom"
+          >
+            <Maximize2 className="w-3 h-3" />
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs gap-1"
+            className="h-7 px-2 text-xs gap-1 font-medium ml-1"
             onClick={handleDownload}
-            disabled={!blobUrl}
-            title="Download PDF"
+            disabled={!activeUrl}
           >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Download</span>
+            <Download className="w-3 h-3" />
+            <span className="hidden sm:inline">Download</span>
           </Button>
 
           <Button
             variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={handleOpenExternal}
-            disabled={!blobUrl}
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={handleOpenInTab}
+            disabled={!activeUrl}
             title="Open in new tab"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3 h-3" />
           </Button>
         </div>
       </div>
 
-      {/* Main View Area */}
-      <div className="relative flex-1 bg-slate-200/50 dark:bg-slate-900/50 overflow-auto flex items-center justify-center p-4">
-        {/* Loading / Compiling Overlay */}
-        {isCompiling && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <div className="text-center">
-              <p className="text-sm font-semibold">Compiling LaTeX...</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Isolated sandbox compilation in progress</p>
-            </div>
+      {/* Main Document Display Area */}
+      <div className="flex-1 overflow-auto p-4 flex items-center justify-center relative bg-muted/20">
+        {compiling && !activeUrl && (
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-xs font-medium">Typesetting PDF with isolated compiler...</p>
           </div>
         )}
 
-        {/* Error State */}
-        {!isCompiling && error && (
-          <div className="max-w-md w-full p-6 bg-card border border-destructive/30 rounded-xl shadow-lg text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
-              <AlertCircle className="w-6 h-6" />
+        {activeError && (
+          <div className="max-w-md w-full p-6 rounded-lg border border-destructive/30 bg-destructive/5 text-center space-y-3 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+              <AlertCircle className="w-5 h-5" />
             </div>
             <div>
               <h4 className="text-sm font-semibold text-destructive">Compilation Failed</h4>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-3 font-mono bg-muted/50 p-2 rounded border border-border/50 text-left">
-                {error}
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-3 font-mono">
+                {activeError}
               </p>
             </div>
-            {onRecompile && (
-              <Button size="sm" variant="outline" onClick={onRecompile} className="gap-1.5 text-xs">
-                <RotateCw className="w-3.5 h-3.5" />
+            {handleRetry && (
+              <Button size="sm" variant="outline" onClick={handleRetry} className="text-xs gap-1.5">
+                <RotateCw className="w-3 h-3" />
                 Retry Compilation
               </Button>
             )}
           </div>
         )}
 
-        {/* Empty / Initial State */}
-        {!isCompiling && !error && !blobUrl && (
-          <div className="text-center p-8 space-y-3 max-w-sm">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+        {!compiling && !activeError && !activeUrl && (
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground text-center max-w-sm">
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground/60 border border-border">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-medium">No PDF Generated Yet</h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Click Compile or press <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px] font-mono">Ctrl+S</kbd> to render your resume.
+              <p className="text-xs font-medium text-foreground">No Document Rendered</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Enter your details on the left and click &quot;Update Preview&quot; or press Ctrl+S to compile.
               </p>
             </div>
-            {onRecompile && (
-              <Button size="sm" onClick={onRecompile} className="gap-1.5 text-xs">
-                <RotateCw className="w-3.5 h-3.5" />
-                Compile Now
-              </Button>
-            )}
           </div>
         )}
 
-        {/* PDF Document Container */}
-        {!isCompiling && !error && blobUrl && (
+        {activeUrl && (
           <div
-            className="transition-transform duration-150 ease-out origin-top shadow-2xl rounded bg-white flex items-center justify-center overflow-hidden"
+            className="transition-transform duration-150 shadow-lg bg-white rounded flex items-center justify-center overflow-hidden"
             style={{
-              transform: `scale(${zoom / 100})`,
-              width: '100%',
-              height: '100%',
-              maxWidth: '850px',
-              minHeight: '700px',
+              width: `${Math.round(595 * (zoom / 100))}px`,
+              height: `${Math.round(842 * (zoom / 100))}px`,
             }}
           >
             <iframe
               ref={iframeRef}
-              src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-              className="w-full h-full border-0 min-h-[750px] bg-white"
-              title="Resume PDF"
+              src={`${activeUrl}#toolbar=0&navpanes=0`}
+              title="Resume Preview"
+              className="w-full h-full border-0 bg-white"
             />
           </div>
         )}

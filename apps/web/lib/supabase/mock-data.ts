@@ -1,23 +1,30 @@
-import { Template, Resume, UserProfile } from '@resumeforge/shared-types';
+import { Template, Resume, ResumeFormData, UserProfile } from '@resumeforge/shared-types';
 
-export const INITIAL_TEMPLATES: Template[] = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    title: 'Classic Professional',
-    description: 'Timeless single-column layout with refined typography and crisp horizontal section dividers. Ideal for software engineering, finance, consulting, and corporate roles.',
-    category: 'Professional',
-    thumbnail_url: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80',
-    tex_template: `\\documentclass[10pt,letterpaper]{article}
-\\usepackage[utf8]{inputenc}
+export const CURRENT_USER_MOCK: UserProfile = {
+  id: 'a0000000-0000-0000-0000-000000000001',
+  email: 'arjun.mehta.dev@example.com',
+  full_name: 'Arjun Mehta',
+  role: 'USER',
+  avatar_url: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+export const MASTER_LATEX_TEMPLATE = `\\documentclass[letterpaper,10pt]{article}
+
+\\usepackage{latexsym}
 \\usepackage[empty]{fullpage}
 \\usepackage{titlesec}
 \\usepackage{marvosym}
 \\usepackage[usenames,dvipsnames]{color}
 \\usepackage{verbatim}
 \\usepackage{enumitem}
-\\usepackage[hidelinks]{hyperref}
+\\usepackage[normalem]{ulem} % Added for clean underlines
+\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
 \\usepackage{fancyhdr}
-\\usepackage[margin=0.65in]{geometry}
+\\usepackage[english]{babel}
+\\usepackage{tabularx}
+\\input{glyphtounicode}
 
 \\pagestyle{fancy}
 \\fancyhf{}
@@ -25,12 +32,12 @@ export const INITIAL_TEMPLATES: Template[] = [
 \\renewcommand{\\headrulewidth}{0pt}
 \\renewcommand{\\footrulewidth}{0pt}
 
-% Adjust margins
-\\addtolength{\\oddsidemargin}{-0.1in}
-\\addtolength{\\evensidemargin}{-0.1in}
-\\addtolength{\\textwidth}{0.2in}
-\\addtolength{\\topmargin}{-0.1in}
-\\addtolength{\\textheight}{0.2in}
+% Page Margins tuned for exact single-page fill
+\\addtolength{\\oddsidemargin}{-0.5in}
+\\addtolength{\\evensidemargin}{-0.5in}
+\\addtolength{\\textwidth}{1.0in}
+\\addtolength{\\topmargin}{-0.5in}
+\\addtolength{\\textheight}{1.0in}
 
 \\urlstyle{same}
 
@@ -38,522 +45,429 @@ export const INITIAL_TEMPLATES: Template[] = [
 \\raggedright
 \\setlength{\\tabcolsep}{0in}
 
-% Sections formatting
+% Section formatting with clean lines and balanced spacing
 \\titleformat{\\section}{
-  \\vspace{-4pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{-5pt}]
+  \\vspace{1pt}\\scshape\\raggedright\\large
+}{}{0em}{}[\\color{black}\\titlerule \\vspace{1pt}]
+
+\\pdfgentounicode=1
+
+% Custom command for underlined blue hyperlinks
+\\newcommand{\\link}[2]{\\href{#1}{\\uline{#2}}}
+
+%-------------------------
+% Custom commands
+\\newcommand{\\resumeItem}[1]{
+  \\item\\small{
+    {#1 \\vspace{-1.5pt}}
+  }
+}
+
+\\newcommand{\\resumeSubheading}[4]{
+  \\vspace{-1.5pt}\\item
+    \\begin{tabular*}{0.98\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+      \\textbf{#1} & #2 \\\\
+      \\textit{\\small#3} & \\textit{\\small #4} \\\\
+    \\end{tabular*}\\vspace{-3pt}
+}
+
+\\newcommand{\\resumeProjectHeading}[2]{
+    \\vspace{-1.5pt}\\item
+    \\begin{tabular*}{0.98\\textwidth}{l@{\\extracolsep{\\fill}}r}
+      \\small#1 & #2 \\\\
+    \\end{tabular*}\\vspace{-3pt}
+}
+
+\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
+\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}\\vspace{-1pt}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-2pt}}
 
 \\begin{document}
 
 %----------HEADING----------
 \\begin{center}
-  {\\Huge \\scshape {{personal.name}} } \\\\[4pt]
-  \\small {{personal.email}} 
-  {{#if personal.phone}} $|$ {{personal.phone}} {{/if}}
-  {{#if personal.location}} $|$ {{personal.location}} {{/if}} \\\\[2pt]
-  {{#if personal.linkedin}} \\href{{{personal.linkedin}}}{\\underline{LinkedIn}} {{/if}}
-  {{#if personal.github}} $|$ \\href{{{personal.github}}}{\\underline{GitHub}} {{/if}}
-  {{#if personal.portfolio}} $|$ \\href{{{personal.portfolio}}}{\\underline{Portfolio}} {{/if}}
+    \\textbf{\\Huge \\scshape {{personal.name}}} \\\\ \\vspace{2pt}
+    \\small {{#if personal.phone}}{{personal.phone}} $|$ {{/if}}
+    \\link{mailto:{{personal.email}}}{{{personal.email}}}
+    {{#if personal.linkedin}} $|$ \\link{{{personal.linkedin}}}{LinkedIn}{{/if}}
+    {{#if personal.github}} $|$ \\link{{{personal.github}}}{GitHub}{{/if}}
+    {{#if personal.portfolio}} $|$ \\link{{{personal.portfolio}}}{Portfolio}{{/if}}
 \\end{center}
+\\vspace{-4pt}
 
-{{#if summary}}
-%-----------SUMMARY-----------
-\\section{Summary}
-\\vspace{1pt}
-{{summary}}
-\\vspace{2pt}
+{{#if education}}
+%-----------EDUCATION-----------
+\\section{Education}
+  \\resumeSubHeadingListStart
+{{#each education}}
+    \\resumeSubheading
+      {{{institution}}}{{{#if gpa}}{{gpa}}{{else}}{{location}}{{/if}}}
+      {{{degree}}}{{#if field}} in {{field}}{{/if}}{{{start_date}} -- {{end_date}}}
+{{/each}}
+  \\resumeSubHeadingListEnd
+{{/if}}
+
+{{#if skills}}
+%-----------TECHNICAL SKILLS \\& COURSEWORK-----------
+\\section{Technical Skills \\& Coursework}
+ \\begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \\small{\\item{
+    {{#each skills}}
+     \\textbf{{{category}}:}\\hspace{0.5em} {{skills}} \\\\[1.5pt]
+    {{/each}}
+    }}
+ \\end{itemize}
+ \\vspace{-2pt}
 {{/if}}
 
 {{#if experience}}
 %-----------EXPERIENCE-----------
 \\section{Experience}
-\\begin{itemize}[leftmargin=0.15in, label={}]
+  \\resumeSubHeadingListStart
 {{#each experience}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{company}}} & {{location}} \\\\[1pt]
-      \\textit{{{role}}} & \\textit{ {{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}} } \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if description}}
-    \\small{{{description}}}
-    {{/if}}
-    {{#if bullets}}
-    \\begin{itemize}[leftmargin=0.15in, topsep=2pt, itemsep=1.5pt]
-    {{#each bullets}}
-      \\item \\small{{{this}}}
-    {{/each}}
-    \\end{itemize}
-    {{/if}}
-    \\vspace{4pt}
+    \\resumeSubheading
+      {{{company}}}{{{location}}}
+      {{{role}}}{{#if technologies}} $|$ {{technologies}}{{/if}}{{{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}}}
+      {{#if bullets}}
+      \\resumeItemListStart
+      {{#each bullets}}
+        \\resumeItem{{{this}}}
+      {{/each}}
+      \\resumeItemListEnd
+      {{/if}}
 {{/each}}
-\\end{itemize}
+  \\resumeSubHeadingListEnd
 {{/if}}
 
 {{#if projects}}
 %-----------PROJECTS-----------
 \\section{Projects}
-\\begin{itemize}[leftmargin=0.15in, label={}]
+    \\resumeSubHeadingListStart
 {{#each projects}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{name}}} {{#if technologies}} $|$ \\textit{\\small{{{technologies}}}} {{/if}} & 
-      {{#if live_url}} \\href{{{live_url}}}{\\underline{Demo}} {{/if}} 
-      {{#if github}} \\href{{{github}}}{\\underline{Code}} {{/if}} \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if description}}
-    \\small{{{description}}}
-    {{/if}}
-    {{#if bullets}}
-    \\begin{itemize}[leftmargin=0.15in, topsep=2pt, itemsep=1.5pt]
-    {{#each bullets}}
-      \\item \\small{{{this}}}
-    {{/each}}
-    \\end{itemize}
-    {{/if}}
-    \\vspace{4pt}
+      \\resumeProjectHeading
+          {\\textbf{{{name}}}}{{#if technologies}} $|$ \\emph{{{technologies}}}{{/if}}{{#if github}}{\\link{{{github}}}{GitHub}}{{else}}{{#if live_url}}{\\link{{{live_url}}}{Demo}}{{/if}}{{/if}}
+          {{#if bullets}}
+          \\resumeItemListStart
+          {{#each bullets}}
+            \\resumeItem{{{this}}}
+          {{/each}}
+          \\resumeItemListEnd
+          {{/if}}
 {{/each}}
-\\end{itemize}
-{{/if}}
-
-{{#if education}}
-%-----------EDUCATION-----------
-\\section{Education}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each education}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{institution}}} & {{location}} \\\\[1pt]
-      \\textit{{{degree}}}{{#if field}}, {{field}}{{/if}} {{#if gpa}}(\${gpa} GPA){{/if}} & \\textit{ {{start_date}} -- {{end_date}} } \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if coursework}}
-    \\small{\\textbf{Coursework:} {{coursework}}}
-    {{/if}}
-    \\vspace{3pt}
-{{/each}}
-\\end{itemize}
-{{/if}}
-
-{{#if skills}}
-%-----------SKILLS-----------
-\\section{Technical Skills}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-  \\small{\\item{
-  {{#each skills}}
-    \\textbf{{{category}}}: {{skills}} \\\\[2pt]
-  {{/each}}
-  }}
-\\end{itemize}
-\\vspace{-4pt}
-{{/if}}
-
-{{#if certifications}}
-%-----------CERTIFICATIONS-----------
-\\section{Certifications}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each certifications}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{name}}} -- \\textit{{{issuer}}} & \\textit{{{date}}} \\\\
-    \\end{tabular*}\\vspace{-4pt}
-{{/each}}
-\\end{itemize}
+    \\resumeSubHeadingListEnd
 {{/if}}
 
 {{#if achievements}}
 %-----------ACHIEVEMENTS-----------
-\\section{Honors \\& Awards}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each achievements}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{title}}} {{#if description}} -- \\small{{{description}}} {{/if}} & \\textit{{{date}}} \\\\
-    \\end{tabular*}\\vspace{-4pt}
-{{/each}}
-\\end{itemize}
+\\section{Achievements}
+    \\resumeItemListStart
+    {{#each achievements}}
+      \\resumeItem{\\textbf{{{title}}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\\link{{{url}}}{[Certificate]}{{/if}}}
+    {{/each}}
+    \\resumeItemListEnd
 {{/if}}
 
-\\end{document}`,
-    schema_definition: {
-      sections: {
-        personal: true,
-        summary: true,
-        education: true,
-        experience: true,
-        projects: true,
-        skills: true,
-        certifications: true,
-        achievements: true,
-      },
-    },
-    version: 1,
-    is_active: true,
-    created_at: '2026-08-24T00:00:00Z',
-    updated_at: '2026-08-24T00:00:00Z',
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    title: 'Modern Developer',
-    description: 'Modern developer layout optimized for high-impact tech resumes. Highlights tech stacks, GitHub repositories, systems architecture, and engineering metrics.',
-    category: 'Tech / Engineering',
-    thumbnail_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
-    tex_template: `\\documentclass[10pt,letterpaper]{article}
-\\usepackage[utf8]{inputenc}
+\\end{document}`;
+
+export const INITIAL_RAW_TEX = `\\documentclass[letterpaper,10pt]{article}
+
+\\usepackage{latexsym}
 \\usepackage[empty]{fullpage}
 \\usepackage{titlesec}
+\\usepackage{marvosym}
+\\usepackage[usenames,dvipsnames]{color}
+\\usepackage{verbatim}
 \\usepackage{enumitem}
-\\usepackage[hidelinks]{hyperref}
-\\usepackage{xcolor}
-\\usepackage[margin=0.6in]{geometry}
+\\usepackage[normalem]{ulem} % Added for clean underlines
+\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
+\\usepackage{fancyhdr}
+\\usepackage[english]{babel}
+\\usepackage{tabularx}
+\\input{glyphtounicode}
 
-\\definecolor{primary}{RGB}{30, 41, 59}
-\\definecolor{secondary}{RGB}{71, 85, 105}
-\\definecolor{accent}{RGB}{15, 23, 42}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\fancyfoot{}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0pt}
 
-\\pagestyle{empty}
+% Page Margins tuned for exact single-page fill
+\\addtolength{\\oddsidemargin}{-0.5in}
+\\addtolength{\\evensidemargin}{-0.5in}
+\\addtolength{\\textwidth}{1.0in}
+\\addtolength{\\topmargin}{-0.5in}
+\\addtolength{\\textheight}{1.0in}
+
+\\urlstyle{same}
+
 \\raggedbottom
 \\raggedright
+\\setlength{\\tabcolsep}{0in}
 
+% Section formatting with clean lines and balanced spacing
 \\titleformat{\\section}{
-  \\vspace{-3pt}\\color{accent}\\bfseries\\uppercase\\normalsize
-}{}{0em}{}[\\color{secondary}\\titlerule \\vspace{-4pt}]
+  \\vspace{1pt}\\scshape\\raggedright\\large
+}{}{0em}{}[\\color{black}\\titlerule \\vspace{1pt}]
+
+\\pdfgentounicode=1
+
+% Custom command for underlined blue hyperlinks
+\\newcommand{\\link}[2]{\\href{#1}{\\uline{#2}}}
+
+%-------------------------
+% Custom commands
+\\newcommand{\\resumeItem}[1]{
+  \\item\\small{
+    {#1 \\vspace{-1.5pt}}
+  }
+}
+
+\\newcommand{\\resumeSubheading}[4]{
+  \\vspace{-1.5pt}\\item
+    \\begin{tabular*}{0.98\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
+      \\textbf{#1} & #2 \\\\
+      \\textit{\\small#3} & \\textit{\\small #4} \\\\
+    \\end{tabular*}\\vspace{-3pt}
+}
+
+\\newcommand{\\resumeProjectHeading}[2]{
+    \\vspace{-1.5pt}\\item
+    \\begin{tabular*}{0.98\\textwidth}{l@{\\extracolsep{\\fill}}r}
+      \\small#1 & #2 \\\\
+    \\end{tabular*}\\vspace{-3pt}
+}
+
+\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
+\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}\\vspace{-1pt}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-2pt}}
 
 \\begin{document}
 
-% Header
+%----------HEADING----------
 \\begin{center}
-  {\\LARGE \\bfseries \\color{primary} {{personal.name}} } \\\\[3pt]
-  \\small \\color{secondary}
-  {{personal.email}}
-  {{#if personal.phone}} $|$ {{personal.phone}} {{/if}}
-  {{#if personal.location}} $|$ {{personal.location}} {{/if}}
-  {{#if personal.github}} $|$ \\href{{{personal.github}}}{\\underline{github.com/{{personal.github}}}} {{/if}}
-  {{#if personal.linkedin}} $|$ \\href{{{personal.linkedin}}}{\\underline{LinkedIn}} {{/if}}
+    \\textbf{\\Huge \\scshape Arjun Mehta} \\\\ \\vspace{2pt}
+    \\small +91 9876543210 $|$
+    \\link{mailto:arjun.mehta.dev@example.com}{arjun.mehta.dev@example.com} $|$
+    \\link{https://www.linkedin.com/in/arjun-mehta-dev/}{LinkedIn} $|$
+    \\link{https://github.com/arjunmehta-dev}{GitHub} $|$
+    \\link{https://arjunmehta.dev/}{Portfolio}
 \\end{center}
-
-{{#if summary}}
 \\vspace{-4pt}
-\\section{Profile}
-\\vspace{1pt}
-\\small{{{summary}}}
-\\vspace{3pt}
-{{/if}}
 
-{{#if skills}}
-\\section{Core Technologies}
-\\vspace{2pt}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-  \\small{\\item{
-  {{#each skills}}
-    \\textbf{{{category}}}: {{skills}} \\\\[1.5pt]
-  {{/each}}
-  }}
-\\end{itemize}
-\\vspace{-4pt}
-{{/if}}
-
-{{#if experience}}
-\\section{Work Experience}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each experience}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{role}}} -- \\textbf{\\color{primary} {{company}} } {{#if location}}({{location}}){{/if}} & \\textit{\\small {{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}} } \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if bullets}}
-    \\begin{itemize}[leftmargin=0.15in, topsep=1.5pt, itemsep=1.5pt]
-    {{#each bullets}}
-      \\item \\small{{{this}}}
-    {{/each}}
-    \\end{itemize}
-    {{/if}}
-    \\vspace{3pt}
-{{/each}}
-\\end{itemize}
-{{/if}}
-
-{{#if projects}}
-\\section{Key Projects \\& Open Source}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each projects}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{name}}} {{#if technologies}} $|$ \\textit{\\small{{{technologies}}}} {{/if}} & 
-      {{#if github}} \\href{{{github}}}{\\underline{GitHub}} {{/if}} 
-      {{#if live_url}} $|$ \\href{{{live_url}}}{\\underline{Live}} {{/if}} \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if bullets}}
-    \\begin{itemize}[leftmargin=0.15in, topsep=1.5pt, itemsep=1.5pt]
-    {{#each bullets}}
-      \\item \\small{{{this}}}
-    {{/each}}
-    \\end{itemize}
-    {{/if}}
-    \\vspace{3pt}
-{{/each}}
-\\end{itemize}
-{{/if}}
-
-{{#if education}}
+%-----------EDUCATION-----------
 \\section{Education}
-\\begin{itemize}[leftmargin=0.15in, label={}]
-{{#each education}}
-  \\item
-    \\begin{tabular*}{\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{{{institution}}} -- \\textit{{{degree}}}{{#if field}} in {{field}}{{/if}} & \\textit{\\small {{start_date}} -- {{end_date}} } \\\\
-    \\end{tabular*}\\vspace{-5pt}
-    {{#if gpa}}
-    \\small{GPA: {{gpa}}}
-    {{/if}}
-    \\vspace{2pt}
-{{/each}}
-\\end{itemize}
-{{/if}}
+  \\resumeSubHeadingListStart
+    \\resumeSubheading
+      {Western Institute of Technology, Ahmedabad-Gujarat, }{CGPA: 8.6/10}
+      {B.Tech. in Computer Science \\& Engineering}{July 2023 -- May 2027}
+    \\resumeSubheading
+      {Silver Oak Science Academy, Surat-Gujarat}{98.72 percentile}
+      {12th Board, GSEB}{May 2022 -- Mar 2023}
+    \\resumeSubheading
+      {Green Valley High School, Surat-Gujarat}{97.84 percentile}
+      {10th Board, GSEB}{June 2020 -- Apr 2021}
+  \\resumeSubHeadingListEnd
 
-\\end{document}`,
-    schema_definition: {
-      sections: {
-        personal: true,
-        summary: true,
-        education: true,
-        experience: true,
-        projects: true,
-        skills: true,
-        certifications: false,
-        achievements: false,
-      },
-    },
-    version: 1,
-    is_active: true,
-    created_at: '2026-08-24T00:00:00Z',
-    updated_at: '2026-08-24T00:00:00Z',
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    title: 'Minimal ATS Executive',
-    description: 'Maximum readability, zero parsing errors. Designed strictly for Applicant Tracking Systems (ATS) with linear section flow and clean formatting.',
-    category: 'ATS Optimized',
-    thumbnail_url: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80',
-    tex_template: `\\documentclass[11pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[margin=0.7in]{geometry}
-\\usepackage{enumitem}
-\\usepackage[hidelinks]{hyperref}
-\\usepackage{titlesec}
+%-----------TECHNICAL SKILLS \\& COURSEWORK-----------
+\\section{Technical Skills \\& Coursework}
+ \\begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \\small{\\item{
+     \\textbf{Languages:}\\hspace{0.5em} C++, C, Python, JavaScript, TypeScript, SQL \\\\[1.5pt]
+     \\textbf{Core Technologies:}\\hspace{0.5em} HTML, CSS, Node.js, React.js, Next.js, REST APIs, FastAPI \\\\[1.5pt]
+     \\textbf{Databases:}\\hspace{0.5em} PostgreSQL, MySQL, MongoDB, Redis \\\\[1.5pt]
+     \\textbf{Tools \\& DevOps:}\\hspace{0.5em} GitHub, VS Code, Docker, Postman, GitHub Actions \\\\[1.5pt]
+     \\textbf{Concepts:}\\hspace{0.5em} Data Structures \\& Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Computer Architecture, System Design, Microservices \\\\[1.5pt]
+     \\textbf{Coursework:}\\hspace{0.5em} Full Stack Web Development, Artificial Intelligence \\& Machine Learning, Cloud Computing
+    }}
+ \\end{itemize}
+ \\vspace{-2pt}
 
-\\pagestyle{empty}
-\\raggedright
-\\setlength{\\parindent}{0pt}
-\\setlength{\\parskip}{4pt}
-
-\\titleformat{\\section}{\\bfseries\\large\\uppercase}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{8pt}{4pt}
-
-\\begin{document}
-
-% Header
-{\\LARGE \\textbf{{{personal.name}}} } \\\\[3pt]
-{{personal.email}} \\quad {{personal.phone}} \\quad {{personal.location}} \\\\[1pt]
-{{#if personal.linkedin}} {{personal.linkedin}} \\quad {{/if}}
-{{#if personal.github}} {{personal.github}} {{/if}}
-
-{{#if summary}}
-\\section{Professional Summary}
-{{summary}}
-{{/if}}
-
-{{#if skills}}
-\\section{Skills}
-{{#each skills}}
-\\textbf{{{category}}}: {{skills}} \\\\
-{{/each}}
-{{/if}}
-
-{{#if experience}}
+%-----------EXPERIENCE-----------
 \\section{Experience}
-{{#each experience}}
-\\textbf{{{role}}} $|$ \\textbf{{{company}}} \\hfill {{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}} \\\\[2pt]
-{{#if description}}
-{{description}}\\\\
-{{/if}}
-{{#if bullets}}
-\\begin{itemize}[leftmargin=15pt, topsep=1pt, itemsep=1pt]
-{{#each bullets}}
-  \\item {{this}}
-{{/each}}
-\\end{itemize}
-{{/if}}
-\\vspace{3pt}
-{{/each}}
-{{/if}}
+  \\resumeSubHeadingListStart
 
-{{#if projects}}
+    \\resumeSubheading
+      {NovaStack Technologies}{Vadodara, Gujarat}
+      {Software Engineer Intern $|$ React, FastAPI, PostgreSQL, OpenAI API}{May 2026 -- Jul 2026}
+      \\resumeItemListStart
+        \\resumeItem{Developed \\textbf{REST APIs} and secured application services using \\textbf{JWT} and \\textbf{RBAC} for an AI-assisted project management platform.}
+        \\resumeItem{Designed a version control module using \\textbf{SQLAlchemy} and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.}
+      \\resumeItemListEnd
+
+  \\resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
 \\section{Projects}
-{{#each projects}}
-\\textbf{{{name}}} {{#if technologies}}(\${technologies}){{/if}} \\hfill {{#if live_url}}{{live_url}}{{/if}} \\\\[2pt]
-{{#if bullets}}
-\\begin{itemize}[leftmargin=15pt, topsep=1pt, itemsep=1pt]
-{{#each bullets}}
-  \\item {{this}}
-{{/each}}
-\\end{itemize}
-{{/if}}
-\\vspace{2pt}
-{{/each}}
-{{/if}}
+    \\resumeSubHeadingListStart
 
-{{#if education}}
-\\section{Education}
-{{#each education}}
-\\textbf{{{degree}}}{{#if field}}, {{field}}{{/if}} \\hfill {{start_date}} -- {{end_date}} \\\\[1pt]
-{{institution}} {{#if location}}-- {{location}}{{/if}} {{#if gpa}}(\${gpa} GPA){{/if}} \\\\[2pt]
-{{/each}}
-{{/if}}
+      \\resumeProjectHeading
+          {\\textbf{StudySphere - AI Learning Platform} $|$ \\emph{FastAPI, React, PostgreSQL, OpenAI API}}{\\link{https://github.com/arjunmehta-dev/studysphere}{GitHub}}
+          \\resumeItemListStart
+            \\resumeItem{Built a \\textbf{RAG}-powered learning platform featuring context-aware study assistance, automated quizzes, and a \\textbf{Monaco Editor}-based coding workspace protected using \\textbf{JWT} and \\textbf{RBAC}.}
+            \\resumeItem{Implemented a Git-inspired document versioning system using \\textbf{SQLAlchemy} and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.}
+          \\resumeItemListEnd
 
-{{#if certifications}}
-\\section{Certifications}
-{{#each certifications}}
-\\textbf{{{name}}} -- {{issuer}} ({{date}}) \\\\
-{{/each}}
-{{/if}}
+      \\resumeProjectHeading
+          {\\textbf{SecureTrack - Security Awareness Platform} $|$ \\emph{MERN, Tailwind, Nodemailer, JWT}}{\\link{https://github.com/arjunmehta-dev/securetrack}{GitHub}}
+          \\resumeItemListStart
+            \\resumeItem{Developed a full-stack \\textbf{security awareness} platform for controlled phishing simulations and employee interaction analytics, including email opens, link clicks, and incident reporting.}
+            \\resumeItem{Implemented \\textbf{role-based access}, bulk user onboarding, and dynamic risk dashboards with \\textbf{AI-assisted} explanations and gamified security scores.}
+          \\resumeItemListEnd
 
-\\end{document}`,
-    schema_definition: {
-      sections: {
-        personal: true,
-        summary: true,
-        education: true,
-        experience: true,
-        projects: true,
-        skills: true,
-        certifications: true,
-        achievements: false,
-      },
-    },
-    version: 1,
-    is_active: true,
-    created_at: '2026-08-24T00:00:00Z',
-    updated_at: '2026-08-24T00:00:00Z',
-  },
-];
+    \\resumeSubHeadingListEnd
 
-export const DEMO_USER: UserProfile = {
-  id: '00000000-0000-0000-0000-000000000001',
-  email: 'alex.developer@example.com',
-  full_name: 'Alex Mercer',
-  role: 'USER',
-  created_at: '2026-08-24T00:00:00Z',
-  updated_at: '2026-08-24T00:00:00Z',
-};
+%-----------ACHIEVEMENTS-----------
+\\section{Achievements}
+    \\resumeItemListStart
+      \\resumeItem{\\textbf{Winner} of National Student Innovation Challenge 2026 -- FinTech Automation Track \\link{https://example.com/certificates/fintech-2026}{[Certificate]}}
+      \\resumeItem{\\textbf{Top 10} in CodeSprint Hackathon 2026 -- Smart Campus Assistant \\link{https://example.com/certificates/codesprint-2026}{[Certificate]}}
+      \\resumeItem{\\textbf{Finalist} in BuildForTomorrow Hackathon -- Environmental Monitoring Platform \\link{https://example.com/certificates/buildfortomorrow-2026}{[Certificate]}}
+    \\resumeItemListEnd
 
-export const DEMO_ADMIN: UserProfile = {
-  id: '00000000-0000-0000-0000-000000000002',
-  email: 'admin@resumeforge.io',
-  full_name: 'Lead Administrator',
-  role: 'ADMIN',
-  created_at: '2026-08-24T00:00:00Z',
-  updated_at: '2026-08-24T00:00:00Z',
-};
+\\end{document}`;
 
-export const SAMPLE_RESUME_FORM_DATA = {
+export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
   personal: {
-    name: 'Alex Mercer',
-    email: 'alex.mercer@gmail.com',
-    phone: '+1 (555) 349-2810',
-    location: 'San Francisco, CA',
-    linkedin: 'https://linkedin.com/in/alex-mercer',
-    github: 'alexmercer-dev',
-    portfolio: 'https://alexmercer.dev',
+    name: 'Arjun Mehta',
+    email: 'arjun.mehta.dev@example.com',
+    phone: '+91 9876543210',
+    location: 'Ahmedabad, Gujarat',
+    linkedin: 'https://www.linkedin.com/in/arjun-mehta-dev/',
+    github: 'https://github.com/arjunmehta-dev',
+    portfolio: 'https://arjunmehta.dev/',
   },
-  summary: 'Senior Full-Stack & Distributed Systems Architect with 7+ years of experience designing high-throughput microservices, cloud infrastructure, and low-latency APIs handling 100M+ monthly transactions.',
   education: [
     {
-      id: 'edu-1',
-      institution: 'University of California, Berkeley',
-      degree: 'B.S. in Computer Science',
-      field: 'Computer Systems & Software Engineering',
-      location: 'Berkeley, CA',
-      start_date: '2015',
-      end_date: '2019',
-      gpa: '3.88',
-      coursework: 'Distributed Systems, Operating Systems, Algorithms, Computer Security',
+      institution: 'Western Institute of Technology, Ahmedabad-Gujarat',
+      degree: 'B.Tech.',
+      field: 'Computer Science & Engineering',
+      gpa: 'CGPA: 8.6/10',
+      start_date: 'July 2023',
+      end_date: 'May 2027',
+      location: 'Ahmedabad, Gujarat',
     },
+    {
+      institution: 'Silver Oak Science Academy, Surat-Gujarat',
+      degree: '12th Board',
+      field: 'GSEB',
+      gpa: '98.72 percentile',
+      start_date: 'May 2022',
+      end_date: 'Mar 2023',
+      location: 'Surat, Gujarat',
+    },
+    {
+      institution: 'Green Valley High School, Surat-Gujarat',
+      degree: '10th Board',
+      field: 'GSEB',
+      gpa: '97.84 percentile',
+      start_date: 'June 2020',
+      end_date: 'Apr 2021',
+      location: 'Surat, Gujarat',
+    },
+  ],
+  skills: [
+    { category: 'Languages', skills: 'C++, C, Python, JavaScript, TypeScript, SQL' },
+    { category: 'Core Technologies', skills: 'HTML, CSS, Node.js, React.js, Next.js, REST APIs, FastAPI' },
+    { category: 'Databases', skills: 'PostgreSQL, MySQL, MongoDB, Redis' },
+    { category: 'Tools & DevOps', skills: 'GitHub, VS Code, Docker, Postman, GitHub Actions' },
+    { category: 'Concepts', skills: 'Data Structures & Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Microservices' },
+    { category: 'Coursework', skills: 'Full Stack Web Development, Artificial Intelligence & Machine Learning, Cloud Computing' },
   ],
   experience: [
     {
-      id: 'exp-1',
-      company: 'Apex Cloud Systems',
-      role: 'Staff Software Engineer',
-      location: 'San Francisco, CA',
-      start_date: 'Jan 2022',
-      end_date: 'Present',
-      current: true,
-      description: 'Lead engineer for the core real-time streaming pipeline processing over 45k events/sec.',
-      bullets: [
-        'Architected high-throughput event streaming platform using Rust and Kafka, decreasing P99 latency by 42%.',
-        'Implemented end-to-end zero-trust authentication and rate-limiting gateway supporting 15M daily requests.',
-        'Mentored 8 junior and mid-level engineers, introduced automated integration test suites increasing code coverage to 94%.',
-      ],
-    },
-    {
-      id: 'exp-2',
-      company: 'Veloce Data Labs',
-      role: 'Senior Backend Engineer',
-      location: 'Mountain View, CA',
-      start_date: 'Jun 2019',
-      end_date: 'Dec 2021',
+      company: 'NovaStack Technologies',
+      role: 'Software Engineer Intern',
+      location: 'Vadodara, Gujarat',
+      technologies: 'React, FastAPI, PostgreSQL, OpenAI API',
+      start_date: 'May 2026',
+      end_date: 'Jul 2026',
       current: false,
-      description: 'Engineered multi-tenant SaaS backend with PostgreSQL, Go, and Redis clusters.',
       bullets: [
-        'Designed database partitioning and caching strategy that reduced server infrastructure costs by $180k/yr.',
-        'Developed automated CI/CD deployment pipelines on Kubernetes cutting release cycle from 3 days to 20 minutes.',
+        'Developed REST APIs and secured application services using JWT and RBAC for an AI-assisted project management platform.',
+        'Designed a version control module using SQLAlchemy and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.',
       ],
     },
   ],
   projects: [
     {
-      id: 'proj-1',
-      name: 'ResilientKV Distributed Store',
-      description: 'High-performance distributed key-value store built on Raft consensus.',
-      technologies: 'Go, Raft, gRPC, Docker',
-      github: 'https://github.com/alexmercer-dev/resilient-kv',
-      live_url: 'https://resilientkv.dev',
+      name: 'StudySphere - AI Learning Platform',
+      technologies: 'FastAPI, React, PostgreSQL, OpenAI API',
+      github: 'https://github.com/arjunmehta-dev/studysphere',
       bullets: [
-        'Implemented linearizable reads and atomic multi-key transactions with snapshot isolation.',
-        'Benchmarked throughput reaching 120k ops/sec with sub-5ms cluster replication.',
+        'Built a RAG-powered learning platform featuring context-aware study assistance, automated quizzes, and a Monaco Editor-based coding workspace protected using JWT and RBAC.',
+        'Implemented a Git-inspired document versioning system using SQLAlchemy and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.',
+      ],
+    },
+    {
+      name: 'SecureTrack - Security Awareness Platform',
+      technologies: 'MERN, Tailwind, Nodemailer, JWT',
+      github: 'https://github.com/arjunmehta-dev/securetrack',
+      bullets: [
+        'Developed a full-stack security awareness platform for controlled phishing simulations and employee interaction analytics, including email opens, link clicks, and incident reporting.',
+        'Implemented role-based access, bulk user onboarding, and dynamic risk dashboards with AI-assisted explanations and gamified security scores.',
       ],
     },
   ],
-  skills: [
-    {
-      id: 'skill-1',
-      category: 'Languages',
-      skills: 'TypeScript, Python, Go, Rust, C++, SQL',
-    },
-    {
-      id: 'skill-2',
-      category: 'Frameworks & Systems',
-      skills: 'Next.js, React, Node.js, FastAPI, PostgreSQL, Redis, Kafka, gRPC',
-    },
-    {
-      id: 'skill-3',
-      category: 'DevOps & Cloud',
-      skills: 'Docker, Kubernetes, AWS, Terraform, CI/CD, Linux, Prometheus',
-    },
-  ],
-  certifications: [
-    {
-      id: 'cert-1',
-      name: 'AWS Certified Solutions Architect -- Professional',
-      issuer: 'Amazon Web Services',
-      date: '2023',
-    },
-  ],
+  certifications: [],
   achievements: [
     {
-      id: 'ach-1',
-      title: '1st Place Winner -- Global Hackathon 2023',
-      description: 'Built decentralized identity verification pipeline selected out of 450+ submissions.',
-      date: '2023',
+      title: 'Winner of National Student Innovation Challenge 2026',
+      description: 'FinTech Automation Track',
+      url: 'https://example.com/certificates/fintech-2026',
+    },
+    {
+      title: 'Top 10 in CodeSprint Hackathon 2026',
+      description: 'Smart Campus Assistant',
+      url: 'https://example.com/certificates/codesprint-2026',
+    },
+    {
+      title: 'Finalist in BuildForTomorrow Hackathon',
+      description: 'Environmental Monitoring Platform',
+      url: 'https://example.com/certificates/buildfortomorrow-2026',
     },
   ],
 };
+
+export const INITIAL_TEMPLATES: Template[] = [
+  {
+    id: '11111111-1111-1111-1111-111111111111',
+    title: 'ATS Software Engineer Classic',
+    description: 'Clean single-page ATS-optimized engineering resume with balanced section dividers, hyperlinks, education table, tech skills grid, experience, projects, and achievements.',
+    category: 'Software Engineering',
+    thumbnail_url: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80',
+    tex_template: MASTER_LATEX_TEMPLATE,
+    schema_definition: {
+      sections: {
+        personal: true,
+        summary: false,
+        education: true,
+        skills: true,
+        experience: true,
+        projects: true,
+        certifications: false,
+        achievements: true,
+      },
+    },
+    version: 1,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+export const INITIAL_RESUMES: Resume[] = [
+  {
+    id: 'r1111111-1111-1111-1111-111111111111',
+    user_id: CURRENT_USER_MOCK.id,
+    title: 'Software Engineer Resume — Arjun Mehta',
+    service_type: 'maker',
+    template_id: '11111111-1111-1111-1111-111111111111',
+    form_data: SAMPLE_RESUME_FORM_DATA,
+    raw_tex: INITIAL_RAW_TEX,
+    pdf_url: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];

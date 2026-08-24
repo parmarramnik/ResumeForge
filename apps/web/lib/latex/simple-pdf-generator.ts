@@ -15,39 +15,47 @@ interface TextLine {
 }
 
 export function generateSimplePdfFromTex(texSource: string): Uint8Array {
-  // Extract text content and structured sections from LaTeX source
   const lines: TextLine[] = [];
 
   const rawLines = texSource.split('\n');
-  let inItemize = false;
 
-  for (let line of rawLines) {
-    line = line.trim();
-    if (!line || line.startsWith('%') || line.startsWith('\\documentclass') || line.startsWith('\\usepackage') || line.startsWith('\\pagestyle') || line.startsWith('\\begin{document}') || line.startsWith('\\end{document}') || line.startsWith('\\titleformat')) {
+  for (let rawLine of rawLines) {
+    let line = rawLine.trim();
+    if (
+      !line ||
+      line.startsWith('%') ||
+      line.startsWith('\\documentclass') ||
+      line.startsWith('\\usepackage') ||
+      line.startsWith('\\pagestyle') ||
+      line.startsWith('\\begin{document}') ||
+      line.startsWith('\\end{document}') ||
+      line.startsWith('\\titleformat') ||
+      line.startsWith('\\newcommand') ||
+      line.startsWith('\\input{glyphtounicode}') ||
+      line.startsWith('\\pdfgentounicode') ||
+      line.startsWith('\\addtolength') ||
+      line.startsWith('\\setlength') ||
+      line.startsWith('\\urlstyle') ||
+      line.startsWith('\\raggedbottom') ||
+      line.startsWith('\\raggedright') ||
+      line.startsWith('\\fancy') ||
+      line.startsWith('\\renewcommand')
+    ) {
       continue;
     }
 
-    if (line.includes('\\begin{itemize}')) {
-      inItemize = true;
-      continue;
-    }
-    if (line.includes('\\end{itemize}')) {
-      inItemize = false;
+    if (line.includes('\\resumeSubHeadingListStart') || line.includes('\\resumeSubHeadingListEnd') || line.includes('\\resumeItemListStart') || line.includes('\\resumeItemListEnd') || line.includes('\\begin{itemize}') || line.includes('\\end{itemize}')) {
       continue;
     }
 
-    // Header Name: \Huge or \LARGE
-    if (line.includes('\\Huge') || line.includes('\\LARGE') || line.includes('\\textbf{')) {
+    // Header Name: \Huge \scshape Name
+    if (line.includes('\\Huge') || line.includes('\\LARGE')) {
       const cleanName = line
-        .replace(/\\Huge|\\LARGE|\\LARGE|\\scshape|\\textbf|\{|\}|\\\\|\$/g, '')
-        .replace(/\\href\{[^}]+\}/g, '')
-        .replace(/\\underline\{([^}]+)\}/g, '$1')
-        .replace(/\\color\{[^}]+\}/g, '')
-        .replace(/\\bfseries/g, '')
+        .replace(/\\textbf|\\Huge|\\LARGE|\\scshape|\{|\}|\\\\|\$/g, '')
         .trim();
 
       if (cleanName && lines.length === 0) {
-        lines.push({ text: cleanName, size: 18, bold: true, align: 'center', spacingAfter: 6 });
+        lines.push({ text: cleanName, size: 16, bold: true, align: 'center', spacingAfter: 4 });
         continue;
       }
     }
@@ -56,21 +64,45 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
     const sectionMatch = line.match(/\\section\{([^}]+)\}/);
     if (sectionMatch) {
       const secTitle = sectionMatch[1].replace(/\\&/g, '&').replace(/\\/g, '').trim();
-      lines.push({ text: secTitle.toUpperCase(), size: 11, bold: true, spacingBefore: 12, spacingAfter: 3 });
-      lines.push({ text: '', size: 0, isRule: true, spacingAfter: 6 });
+      lines.push({ text: secTitle.toUpperCase(), size: 10, bold: true, spacingBefore: 10, spacingAfter: 2 });
+      lines.push({ text: '', size: 0, isRule: true, spacingAfter: 5 });
       continue;
     }
 
-    // Itemize bullet: \item
-    if (line.startsWith('\\item')) {
+    // resumeSubheading{Institution}{Location/GPA}{Degree}{Date}
+    const subheadMatch = line.match(/\\resumeSubheading\s*\{([^}]+)\}\s*\{([^}]*)\}\s*\{([^}]*)\}\s*\{([^}]*)\}/);
+    if (subheadMatch) {
+      const title1 = subheadMatch[1].replace(/\\&/g, '&').replace(/[\{\}\\]/g, '').trim();
+      const right1 = subheadMatch[2].replace(/\\&/g, '&').replace(/[\{\}\\]/g, '').trim();
+      const title2 = subheadMatch[3].replace(/\\&/g, '&').replace(/[\{\}\\]/g, '').trim();
+      const right2 = subheadMatch[4].replace(/\\&/g, '&').replace(/[\{\}\\]/g, '').trim();
+
+      lines.push({ text: right1 ? `${title1}    |    ${right1}` : title1, size: 9, bold: true, spacingAfter: 1.5 });
+      if (title2 || right2) {
+        lines.push({ text: right2 ? `${title2}  (${right2})` : title2, size: 8.5, spacingAfter: 3 });
+      }
+      continue;
+    }
+
+    // resumeProjectHeading{ProjectName}{Link}
+    const projMatch = line.match(/\\resumeProjectHeading\s*\{([^}]+)\}\s*\{([^}]*)\}/);
+    if (projMatch) {
+      const projLeft = projMatch[1].replace(/\\textbf\{([^}]+)\}/g, '$1').replace(/\\emph\{([^}]+)\}/g, '$1').replace(/\\&/g, '&').replace(/[\{\}\\]/g, '').trim();
+      const projRight = projMatch[2].replace(/\\link\{[^}]+\}\{([^}]+)\}/g, '$1').replace(/[\{\}\\]/g, '').trim();
+
+      lines.push({ text: projRight ? `${projLeft}   —   ${projRight}` : projLeft, size: 9, bold: true, spacingAfter: 2 });
+      continue;
+    }
+
+    // resumeItem{...} or \item
+    if (line.includes('\\resumeItem') || line.startsWith('\\item')) {
       const cleanBullet = line
+        .replace(/\\resumeItem\s*\{?/, '')
         .replace(/\\item\s*/, '')
-        .replace(/\\small\{([^}]+)\}/g, '$1')
+        .replace(/\\link\{[^}]+\}\{([^}]+)\}/g, '$1')
         .replace(/\\textbf\{([^}]+)\}/g, '$1')
         .replace(/\\textit\{([^}]+)\}/g, '$1')
-        .replace(/\\href\{[^}]+\}\{([^}]+)\}/g, '$1')
-        .replace(/\\href\{[^}]+\}/g, '')
-        .replace(/\\underline\{([^}]+)\}/g, '$1')
+        .replace(/\\small\{([^}]+)\}/g, '$1')
         .replace(/\\&/g, '&')
         .replace(/\\%/g, '%')
         .replace(/\\\$/g, '$')
@@ -81,21 +113,17 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
         .trim();
 
       if (cleanBullet) {
-        lines.push({ text: `•  ${cleanBullet}`, size: 9, spacingAfter: 3 });
+        lines.push({ text: `•  ${cleanBullet}`, size: 8.5, spacingAfter: 2.5 });
       }
       continue;
     }
 
-    // Regular line / tabular row
+    // Regular line / header contact line
     const cleanLine = line
+      .replace(/\\link\{[^}]+\}\{([^}]+)\}/g, '$1')
       .replace(/\\textbf\{([^}]+)\}/g, '$1')
       .replace(/\\textit\{([^}]+)\}/g, '$1')
-      .replace(/\\href\{[^}]+\}\{([^}]+)\}/g, '$1')
-      .replace(/\\href\{[^}]+\}/g, '')
-      .replace(/\\underline\{([^}]+)\}/g, '$1')
-      .replace(/\\begin\{[^}]+\}|\\end\{[^}]+\}/g, '')
-      .replace(/\\extracolsep\{[^}]+\}/g, '')
-      .replace(/\\vspace\{[^}]+\}/g, '')
+      .replace(/\\hspace\{[^}]+\}/g, ' ')
       .replace(/\\&/g, '&')
       .replace(/\\%/g, '%')
       .replace(/\\\$/g, '$')
@@ -106,13 +134,13 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
       .replace(/\s+/g, ' ')
       .trim();
 
-    if (cleanLine && cleanLine !== '&') {
+    if (cleanLine && cleanLine !== '&' && cleanLine !== '\\end{center}') {
       const isHeaderRow = lines.length < 3;
       lines.push({
         text: cleanLine,
-        size: isHeaderRow ? 8.5 : 9,
+        size: isHeaderRow ? 8.5 : 8.5,
         align: isHeaderRow ? 'center' : 'left',
-        spacingAfter: 3,
+        spacingAfter: 2.5,
       });
     }
   }
@@ -120,8 +148,8 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
   // Construct PDF binary buffer
   const pageWidth = 595.28; // A4 pt
   const pageHeight = 841.89;
-  const marginX = 40;
-  const marginY = 40;
+  const marginX = 36;
+  const marginY = 36;
 
   let streamContent = 'BT\n';
   let currentY = pageHeight - marginY;
@@ -129,7 +157,7 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
   for (const item of lines) {
     if (item.isRule) {
       streamContent += 'ET\n';
-      streamContent += `0.2 w\n0.5 0.5 0.5 RG\n${marginX} ${currentY} m ${pageWidth - marginX} ${currentY} l S\n`;
+      streamContent += `0.3 w\n0.3 0.3 0.3 RG\n${marginX} ${currentY} m ${pageWidth - marginX} ${currentY} l S\n`;
       streamContent += 'BT\n';
       currentY -= (item.spacingAfter || 4);
       continue;
@@ -141,20 +169,19 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
     streamContent += `${fontName} ${item.size} Tf\n`;
 
     // Wrap long lines
-    const maxCharsPerLine = Math.floor((pageWidth - marginX * 2) / (item.size * 0.52));
+    const maxCharsPerLine = Math.floor((pageWidth - marginX * 2) / (item.size * 0.5));
     const words = item.text.split(' ');
     let currentLineText = '';
 
     for (const word of words) {
       if ((currentLineText + ' ' + word).length > maxCharsPerLine) {
-        // Render line
         const textX = item.align === 'center'
           ? Math.max(marginX, (pageWidth - currentLineText.length * item.size * 0.48) / 2)
           : marginX;
 
         const safeStr = currentLineText.replace(/[\(\)\\]/g, (m) => `\\${m}`);
         streamContent += `1 0 0 1 ${textX.toFixed(2)} ${currentY.toFixed(2)} Tm (${safeStr}) Tj\n`;
-        currentY -= item.size + 2.5;
+        currentY -= item.size + 2;
         currentLineText = word;
       } else {
         currentLineText = currentLineText ? currentLineText + ' ' + word : word;
@@ -168,7 +195,7 @@ export function generateSimplePdfFromTex(texSource: string): Uint8Array {
 
       const safeStr = currentLineText.replace(/[\(\)\\]/g, (m) => `\\${m}`);
       streamContent += `1 0 0 1 ${textX.toFixed(2)} ${currentY.toFixed(2)} Tm (${safeStr}) Tj\n`;
-      currentY -= item.size + (item.spacingAfter || 3);
+      currentY -= item.size + (item.spacingAfter || 2.5);
     }
   }
 

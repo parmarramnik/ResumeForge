@@ -53,10 +53,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/maker') ||
     pathname.startsWith('/generator') ||
     pathname.startsWith('/resumes') ||
-    pathname.startsWith('/admin');
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/settings');
 
   // If Supabase is placeholder / demo mode, allow access
-  const isDemoFallback = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+  const isDemoFallback = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder') || process.env.ENABLE_DEMO_AUTH === 'true';
 
   if (!isDemoFallback) {
     if (!user && isProtectedRoute) {

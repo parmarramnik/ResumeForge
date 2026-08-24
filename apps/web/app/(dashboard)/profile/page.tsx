@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DEMO_USER } from '@/lib/supabase/mock-data';
+import { CURRENT_USER_MOCK } from '@/lib/supabase/mock-data';
 
 export default function ProfilePage() {
   return (
@@ -33,11 +33,11 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
               <Label>Full Name</Label>
-              <Input defaultValue={DEMO_USER.full_name || 'Alex Mercer'} />
+              <Input defaultValue={CURRENT_USER_MOCK.full_name || 'Arjun Mehta'} />
             </div>
             <div className="space-y-1.5">
               <Label>Email Address</Label>
-              <Input defaultValue={DEMO_USER.email || 'alex@example.com'} disabled />
+              <Input defaultValue={CURRENT_USER_MOCK.email || 'arjun.mehta.dev@example.com'} disabled />
               <p className="text-[11px] text-muted-foreground">Managed via Supabase Auth</p>
             </div>
             <Button size="sm" className="text-xs">Save Changes</Button>

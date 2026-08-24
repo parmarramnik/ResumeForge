@@ -8,18 +8,16 @@ import {
   Download,
   FileCode,
   RotateCcw,
-  Sparkles,
   AlertTriangle,
   ChevronUp,
   ChevronDown,
-  Layers,
   Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ResumePdfViewer } from '@/components/pdf/resume-pdf-viewer';
-import { INITIAL_TEMPLATES } from '@/lib/supabase/mock-data';
+import { INITIAL_RAW_TEX } from '@/lib/supabase/mock-data';
 import { CompileErrorDetail, Resume } from '@resumeforge/shared-types';
 
 interface MonacoEditorComponentProps {
@@ -43,9 +41,9 @@ interface MakerViewProps {
 }
 
 export function MakerView({ initialResume }: MakerViewProps) {
-  const [title, setTitle] = useState<string>(initialResume?.title || 'Senior Software Engineer Resume');
+  const [title, setTitle] = useState<string>(initialResume?.title || 'Software Engineer Resume — Arjun Mehta');
   const [texContent, setTexContent] = useState<string>(
-    initialResume?.raw_tex || INITIAL_TEMPLATES[0].tex_template
+    initialResume?.raw_tex || INITIAL_RAW_TEX
   );
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
@@ -55,6 +53,15 @@ export function MakerView({ initialResume }: MakerViewProps) {
   const [isErrorDrawerOpen, setIsErrorDrawerOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+
+  // Check if opened from Generator
+  useEffect(() => {
+    const transferredTex = localStorage.getItem('resumeforge_maker_tex');
+    if (transferredTex) {
+      setTexContent(transferredTex);
+      localStorage.removeItem('resumeforge_maker_tex');
+    }
+  }, []);
 
   // Compilation handler
   const handleCompile = useCallback(async () => {
@@ -113,7 +120,6 @@ export function MakerView({ initialResume }: MakerViewProps) {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2500);
     } catch {
-      // Local fallback
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2500);
     } finally {
@@ -121,71 +127,62 @@ export function MakerView({ initialResume }: MakerViewProps) {
     }
   };
 
-  // Download .tex handler
-  const handleDownloadTex = () => {
-    const blob = new Blob([texContent], { type: 'text/plain;charset=utf-8' });
+  // Export .tex file
+  const handleExportTex = () => {
+    const blob = new Blob([texContent], { type: 'text/x-tex;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${title.replace(/\s+/g, '_')}.tex`;
+    a.download = `${title.toLowerCase().replace(/\s+/g, '-')}.tex`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  // Load starting template preset
-  const handleLoadTemplatePreset = (tId: string) => {
-    const tmpl = INITIAL_TEMPLATES.find((t) => t.id === tId);
-    if (tmpl && confirm('Replace current editor contents with selected template preset?')) {
-      setTexContent(tmpl.tex_template);
-      setTitle(`${tmpl.title} Resume`);
+  const handleResetToTemplate = () => {
+    if (window.confirm('Reset editor to default template? Unsaved changes will be lost.')) {
+      setTexContent(INITIAL_RAW_TEX);
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] -m-6 md:-m-8">
-      {/* IDE Action Bar */}
-      <div className="h-13 bg-card border-b border-border px-4 py-2 flex items-center justify-between gap-3 shrink-0">
-        {/* Title Input */}
-        <div className="flex items-center gap-2 min-w-0 max-w-sm">
-          <FileCode className="w-4 h-4 text-primary shrink-0" />
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+      {/* Top Action Toolbar */}
+      <div className="h-14 border-b border-border bg-card/60 px-6 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <FileCode className="w-4 h-4 text-primary" />
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-8 text-xs font-medium bg-transparent border-transparent hover:border-border focus:border-input focus:bg-background transition-colors truncate"
-            placeholder="Untitled Resume"
+            className="h-8 w-72 text-xs font-semibold bg-transparent border-transparent hover:border-border focus:border-border px-2"
           />
+          <Badge variant="outline" className="text-[10px] uppercase font-mono text-muted-foreground">
+            Direct LaTeX IDE
+          </Badge>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center gap-2">
-          {/* Template Presets Selector */}
-          <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground mr-2">
-            <Layers className="w-3.5 h-3.5" />
-            <select
-              className="text-xs bg-muted/50 border border-border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-ring text-foreground font-medium"
-              onChange={(e) => handleLoadTemplatePreset(e.target.value)}
-              defaultValue=""
-            >
-              <option value="" disabled>Presets...</option>
-              {INITIAL_TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetToTemplate}
+            className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+            title="Reset code to default template"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reset</span>
+          </Button>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownloadTex}
-            className="h-8 text-xs gap-1.5"
-            title="Download LaTeX Source"
+            onClick={handleExportTex}
+            className="h-8 text-xs gap-1.5 font-medium"
+            title="Download .tex source code"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export .tex</span>
+            <span className="hidden sm:inline">Export</span> .tex
           </Button>
 
           <Button
@@ -193,17 +190,17 @@ export function MakerView({ initialResume }: MakerViewProps) {
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-8 text-xs gap-1.5"
+            className="h-8 text-xs gap-1.5 font-medium"
           >
             {saveStatus === 'saved' ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Saved</span>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Saved!</span>
               </>
             ) : (
               <>
                 <Save className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Save</span>
+                <span>{isSaving ? 'Saving...' : 'Save'}</span>
               </>
             )}
           </Button>
@@ -212,60 +209,60 @@ export function MakerView({ initialResume }: MakerViewProps) {
             size="sm"
             onClick={handleCompile}
             disabled={isCompiling}
-            className="h-8 text-xs gap-1.5 shadow-sm font-semibold bg-primary hover:bg-primary/90"
-            title="Compile LaTeX (Ctrl+S / Cmd+S)"
+            className="h-8 text-xs gap-1.5 shadow-sm font-semibold bg-primary text-primary-foreground"
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Compile</span>
-            <kbd className="hidden md:inline-block ml-1 px-1 py-0.2 rounded bg-primary-foreground/20 text-[10px] font-mono">
-              Ctrl+S
-            </kbd>
+            <Play className={`w-3.5 h-3.5 fill-current ${isCompiling ? 'animate-spin' : ''}`} />
+            <span>{isCompiling ? 'Compiling...' : 'Compile (Ctrl+S)'}</span>
           </Button>
         </div>
       </div>
 
       {/* Main Split-Pane Workspace */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden bg-background">
-        {/* Left: Monaco LaTeX Editor + Error Drawer */}
-        <div className="flex flex-col h-full border-r border-border overflow-hidden">
-          <div className="flex-1 overflow-hidden p-2">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Pane: Monaco Code Editor */}
+        <div className="w-1/2 flex flex-col border-r border-border bg-[#1e1e1e]">
+          <div className="flex-1 overflow-hidden">
             <MonacoLatexEditor
               value={texContent}
-              onChange={setTexContent}
+              onChange={(val) => setTexContent(val || '')}
               onCompile={handleCompile}
               errors={compileErrors}
               highlightLine={highlightLine}
             />
           </div>
 
-          {/* Compiler Diagnostics Drawer */}
+          {/* Diagnostic Error Drawer */}
           {errorMessage && (
-            <div className="border-t border-destructive/30 bg-destructive/5 shrink-0 transition-all">
+            <div className="border-t border-destructive/30 bg-destructive/10 text-xs">
               <div
-                className="flex items-center justify-between px-3 py-1.5 bg-destructive/10 text-destructive text-xs font-semibold cursor-pointer select-none"
+                className="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-destructive/20 select-none"
                 onClick={() => setIsErrorDrawerOpen(!isErrorDrawerOpen)}
               >
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Compiler Diagnostics ({compileErrors.length || 1} issue{compileErrors.length > 1 ? 's' : ''})</span>
+                <div className="flex items-center gap-2 text-destructive font-medium">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Compilation Diagnostic ({compileErrors.length} issues)</span>
                 </div>
-                {isErrorDrawerOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                {isErrorDrawerOpen ? (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                )}
               </div>
 
               {isErrorDrawerOpen && (
-                <div className="p-3 max-h-36 overflow-y-auto space-y-1.5 font-mono text-xs text-foreground">
-                  <p className="text-destructive font-medium text-[11px]">{errorMessage}</p>
+                <div className="px-4 pb-3 max-h-48 overflow-y-auto space-y-1.5 font-mono text-[11px]">
+                  <p className="text-destructive font-semibold">{errorMessage}</p>
                   {compileErrors.map((err, idx) => (
                     <div
                       key={idx}
-                      onClick={() => err.line && setHighlightLine(err.line)}
-                      className="p-1.5 rounded bg-muted/60 hover:bg-muted cursor-pointer flex items-center justify-between text-[11px] border border-border/50"
+                      onClick={() => setHighlightLine(err.line ?? null)}
+                      className="p-1.5 rounded bg-background/50 border border-destructive/20 hover:border-destructive text-foreground cursor-pointer flex items-center justify-between"
                     >
-                      <span className="truncate">{err.message}</span>
+                      <span>{err.message}</span>
                       {err.line && (
-                        <Badge variant="destructive" className="ml-2 font-mono text-[9px] px-1 py-0 h-4">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-bold">
                           Line {err.line}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                   ))}
@@ -275,14 +272,13 @@ export function MakerView({ initialResume }: MakerViewProps) {
           )}
         </div>
 
-        {/* Right: PDF Viewer */}
-        <div className="flex flex-col h-full overflow-hidden p-2">
+        {/* Right Pane: High Performance PDF Viewer */}
+        <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden">
           <ResumePdfViewer
             pdfBlob={pdfBlob}
-            isCompiling={isCompiling}
-            error={errorMessage}
-            onRecompile={handleCompile}
-            documentTitle={title}
+            isLoading={isCompiling}
+            errorMessage={errorMessage}
+            onRetry={handleCompile}
           />
         </div>
       </div>
