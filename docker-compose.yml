@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Isolated LaTeX Compiler Microservice
+  compiler:
+    build:
+      context: ./apps/compiler-service
+      dockerfile: Dockerfile
+    container_name: resumeforge-compiler
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - COMPILER_TIMEOUT=8
+      - MAX_INPUT_BYTES=2097152
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - resumeforge-net
+
+  # Next.js BFF and Web Application
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: resumeforge-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - COMPILER_SERVICE_URL=http://compiler:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://placeholder.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-placeholder-anon-key}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-placeholder-service-role-key}
+    depends_on:
+      - compiler
+    networks:
+      - resumeforge-net
+
+networks:
+  resumeforge-net:
+    driver: bridge

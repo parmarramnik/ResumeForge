@@ -1,0 +1,13 @@
+{
+  "name": "@resumeforge/template-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@resumeforge/shared-types": "*"
+  }
+}
