@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { SidebarProvider } from './sidebar-context';
 import { UserProfile } from '@resumeforge/shared-types';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -20,7 +21,7 @@ export function clearCachedUserProfile() {
   cachedUserProfile = null;
 }
 
-export function DashboardLayout({ children, initialUser, noPadding = false }: DashboardLayoutProps) {
+function DashboardLayoutContent({ children, initialUser, noPadding = false }: DashboardLayoutProps) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(
     initialUser || cachedUserProfile || null
   );
@@ -93,5 +94,13 @@ export function DashboardLayout({ children, initialUser, noPadding = false }: Da
         </main>
       </div>
     </div>
+  );
+}
+
+export function DashboardLayout(props: DashboardLayoutProps) {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutContent {...props} />
+    </SidebarProvider>
   );
 }

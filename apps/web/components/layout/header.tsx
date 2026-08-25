@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { UserProfile } from '@resumeforge/shared-types';
 import { Button } from '@/components/ui/button';
-import { LogOut, AlertCircle, X } from 'lucide-react';
+import { LogOut, AlertCircle, X, PanelLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { useRouter } from 'next/navigation';
 import { clearCachedUserProfile } from './dashboard-layout';
+import { useSidebar } from './sidebar-context';
 
 interface HeaderProps {
   user?: UserProfile | null;
@@ -16,6 +17,7 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
@@ -58,7 +60,22 @@ export function Header({ user }: HeaderProps) {
 
   return (
     <>
-      <header className="h-14 border-b border-border bg-card px-6 flex items-center justify-end shrink-0">
+      <header className="h-14 border-b border-border bg-card px-4 md:px-6 flex items-center justify-between shrink-0">
+        {/* Left Side: Sidebar Toggle Button */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label="Toggle sidebar"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Right Side: Theme Toggle, Profile, and Sign Out */}
         <div className="flex items-center gap-3">
           {/* 1. Theme Button (First Position) */}
           <div className="flex items-center pr-2 border-r border-border">

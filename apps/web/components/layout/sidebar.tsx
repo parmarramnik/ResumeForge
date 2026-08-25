@@ -11,8 +11,12 @@ import {
   User,
   Settings,
   FileCode2,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSidebar } from './sidebar-context';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   className?: string;
@@ -20,6 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   const workspaceLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -39,23 +44,52 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   return (
-    <aside className={cn('w-60 border-r border-border bg-card flex flex-col justify-between h-screen shrink-0', className)}>
-      <div className="flex flex-col flex-1 overflow-y-auto">
-        {/* Brand Header */}
-        <div className="h-14 px-5 flex items-center gap-2.5 border-b border-border">
-          <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center font-bold text-sm">
-            <FileCode2 className="w-4 h-4" />
-          </div>
-          <span className="font-semibold tracking-tight text-sm">ResumeForge</span>
+    <aside
+      className={cn(
+        'border-r border-border bg-card flex flex-col justify-between h-screen shrink-0 transition-all duration-200 ease-in-out select-none',
+        isCollapsed ? 'w-16' : 'w-60',
+        className
+      )}
+    >
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Brand Header & Toggle */}
+        <div className={cn(
+          'h-14 flex items-center border-b border-border transition-all duration-200',
+          isCollapsed ? 'justify-center px-0' : 'justify-between px-4'
+        )}>
+          <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center font-bold text-sm shrink-0">
+              <FileCode2 className="w-4 h-4" />
+            </div>
+            {!isCollapsed && (
+              <span className="font-semibold tracking-tight text-sm truncate">
+                ResumeForge
+              </span>
+            )}
+          </Link>
+
+          {!isCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Navigation Sections */}
-        <div className="px-3 py-4 space-y-6">
-          {/* Workspace */}
+        <div className="px-2 py-4 space-y-6">
+          {/* Workspace Section */}
           <div>
-            <div className="px-3 mb-2 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
-              Workspace
-            </div>
+            {!isCollapsed && (
+              <div className="px-2.5 mb-2 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
+                Workspace
+              </div>
+            )}
             <nav className="space-y-1">
               {workspaceLinks.map((link) => {
                 const Icon = link.icon;
@@ -65,26 +99,32 @@ export function Sidebar({ className }: SidebarProps) {
                     key={link.href}
                     href={link.href}
                     prefetch={true}
+                    title={isCollapsed ? link.name : undefined}
                     className={cn(
-                      'flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors',
+                      'flex items-center gap-2.5 py-2 text-xs font-medium rounded-md transition-colors',
+                      isCollapsed ? 'justify-center px-0 h-9 w-full' : 'px-3',
                       active
                         ? 'bg-foreground text-background font-semibold'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
-                    <span>{link.name}</span>
-                    {link.badge && (
-                      <span
-                        className={cn(
-                          'ml-auto text-[10px] px-1.5 py-0.2 rounded font-mono',
-                          active
-                            ? 'bg-background/20 text-background'
-                            : 'bg-muted text-muted-foreground border border-border'
+                    {!isCollapsed && (
+                      <>
+                        <span className="truncate">{link.name}</span>
+                        {link.badge && (
+                          <span
+                            className={cn(
+                              'ml-auto text-[10px] px-1.5 py-0.2 rounded font-mono',
+                              active
+                                ? 'bg-background/20 text-background'
+                                : 'bg-muted text-muted-foreground border border-border'
+                            )}
+                          >
+                            {link.badge}
+                          </span>
                         )}
-                      >
-                        {link.badge}
-                      </span>
+                      </>
                     )}
                   </Link>
                 );
@@ -92,11 +132,13 @@ export function Sidebar({ className }: SidebarProps) {
             </nav>
           </div>
 
-          {/* Account */}
+          {/* Account Section */}
           <div>
-            <div className="px-3 mb-2 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
-              Account
-            </div>
+            {!isCollapsed && (
+              <div className="px-2.5 mb-2 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
+                Account
+              </div>
+            )}
             <nav className="space-y-1">
               {accountLinks.map((link) => {
                 const Icon = link.icon;
@@ -106,15 +148,17 @@ export function Sidebar({ className }: SidebarProps) {
                     key={link.href}
                     href={link.href}
                     prefetch={true}
+                    title={isCollapsed ? link.name : undefined}
                     className={cn(
-                      'flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors',
+                      'flex items-center gap-2.5 py-2 text-xs font-medium rounded-md transition-colors',
+                      isCollapsed ? 'justify-center px-0 h-9 w-full' : 'px-3',
                       active
                         ? 'bg-foreground text-background font-semibold'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
-                    <span>{link.name}</span>
+                    {!isCollapsed && <span className="truncate">{link.name}</span>}
                   </Link>
                 );
               })}
@@ -122,6 +166,21 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </div>
       </div>
+
+      {/* Collapsed Bottom Expand Button */}
+      {isCollapsed && (
+        <div className="p-2 border-t border-border flex justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            title="Expand sidebar"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </aside>
   );
 }
