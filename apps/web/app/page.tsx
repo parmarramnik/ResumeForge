@@ -238,7 +238,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-6">
             <Link href="/maker" className="hover:text-foreground transition-colors">Resume Maker</Link>
             <Link href="/generator" className="hover:text-foreground transition-colors">Resume Generator</Link>
-            <Link href="/admin/dashboard" className="hover:text-foreground transition-colors">Admin Portal</Link>
+            <Link href="/dashboard" className="hover:text-foreground transition-colors">Workspace</Link>
           </div>
         </div>
       </footer>
