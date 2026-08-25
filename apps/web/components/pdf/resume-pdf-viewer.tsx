@@ -4,14 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ZoomIn,
   ZoomOut,
-  Maximize2,
   Download,
   RotateCw,
   FileText,
   AlertCircle,
   Loader2,
   ExternalLink,
-  Minimize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -80,35 +78,25 @@ export function ResumePdfViewer({
     window.open(activeUrl, '_blank');
   };
 
-  // Fit to width calculation
-  const handleFitWidth = () => {
-    if (containerRef.current) {
-      const containerWidth = containerRef.current.clientWidth - 48; // padding
-      const targetZoom = Math.round((containerWidth / 595) * 100);
-      setZoom(Math.min(160, Math.max(50, targetZoom)));
-    } else {
-      setZoom(100);
-    }
-  };
-
   return (
     <div className={cn('flex flex-col h-full bg-muted/40 border-l border-border select-none overflow-hidden', className)}>
       {/* Viewer Action Toolbar */}
       <div className="h-10 px-4 border-b border-border bg-card/60 flex items-center justify-between text-xs shrink-0 z-10">
         <div className="flex items-center gap-2 text-muted-foreground font-medium">
-          <FileText className="w-3.5 h-3.5 text-primary" />
+          <FileText className="w-3.5 h-3.5 text-foreground" />
           <span className="font-semibold text-foreground">PDF Preview</span>
           {compiling && (
-            <span className="flex items-center gap-1 text-[11px] text-primary animate-pulse ml-2 font-mono">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Rendering...
-            </span>
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Loader2 className="w-3 h-3 animate-spin text-foreground" />
+              <span>Rendering...</span>
+            </div>
           )}
         </div>
 
-        {/* Zoom & Download Controls */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center border border-border rounded-md overflow-hidden bg-background">
+          {/* Zoom Controls */}
+          <div className="flex items-center bg-card border border-border rounded-md overflow-hidden">
             <Button
               variant="ghost"
               size="icon"
@@ -136,30 +124,8 @@ export function ResumePdfViewer({
 
           <Button
             variant="outline"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={handleFitWidth}
-            disabled={!activeUrl}
-            title="Fit to Width"
-          >
-            <Maximize2 className="w-3 h-3" />
-          </Button>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => setZoom(100)}
-            disabled={!activeUrl}
-            title="Actual Size (100%)"
-          >
-            <Minimize2 className="w-3 h-3" />
-          </Button>
-
-          <Button
-            variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs gap-1 font-medium ml-1"
+            className="h-7 px-2 text-xs gap-1 font-medium ml-1 border-border"
             onClick={handleDownload}
             disabled={!activeUrl}
           >
@@ -180,68 +146,84 @@ export function ResumePdfViewer({
         </div>
       </div>
 
-      {/* Main Document Display Area (Top-Aligned with Proper Vertical Scrolling) */}
+      {/* Main Preview Container */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto overflow-x-auto p-6 flex flex-col items-center justify-start relative bg-[#525659]/10 dark:bg-black/30"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-6 flex flex-col items-center justify-start bg-muted/20 relative"
       >
-        {compiling && !activeUrl && (
-          <div className="m-auto flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-xs font-medium">Typesetting PDF with isolated compiler...</p>
+        {/* Loading Overlay */}
+        {compiling && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2 z-20 transition-all">
+            <Loader2 className="w-6 h-6 animate-spin text-foreground" />
+            <span className="text-xs font-medium text-foreground">Compiling PDF...</span>
           </div>
         )}
 
-        {activeError && (
-          <div className="m-auto max-w-md w-full p-6 rounded-lg border border-destructive/30 bg-destructive/5 text-center space-y-3 shadow-sm">
-            <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-destructive">Compilation Failed</h4>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-3 font-mono">
+        {/* Error Notification Banner */}
+        {activeError && !compiling && (
+          <div className="w-full max-w-xl mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-1">
+              <h4 className="text-xs font-semibold">Compilation Error</h4>
+              <p className="text-xs opacity-90 leading-relaxed font-mono whitespace-pre-wrap">
                 {activeError}
               </p>
             </div>
             {handleRetry && (
-              <Button size="sm" variant="outline" onClick={handleRetry} className="text-xs gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-destructive/30 hover:bg-destructive/20 text-destructive flex-shrink-0 gap-1"
+                onClick={handleRetry}
+              >
                 <RotateCw className="w-3 h-3" />
-                Retry Compilation
+                <span>Retry</span>
               </Button>
             )}
           </div>
         )}
 
-        {!compiling && !activeError && !activeUrl && (
-          <div className="m-auto flex flex-col items-center justify-center gap-3 text-muted-foreground text-center max-w-sm">
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground/60 border border-border">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-foreground">No Document Rendered</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Enter your details on the left and click &quot;Update Preview&quot; or press Ctrl+S to compile.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeUrl && (
+        {/* Rendered PDF Document */}
+        {activeUrl ? (
           <div
-            className="transition-all duration-150 shadow-2xl bg-white rounded border border-border/80 shrink-0 mb-8"
+            className="transition-transform duration-150 origin-top shadow-xl rounded-md overflow-hidden bg-white border border-border"
             style={{
-              width: `${Math.round(595 * (zoom / 100))}px`,
-              height: `${Math.round(842 * (zoom / 100))}px`,
+              width: `${(595 * zoom) / 100}px`,
+              height: `${(842 * zoom) / 100}px`,
+              maxWidth: 'none',
             }}
           >
             <iframe
               ref={iframeRef}
-              src={`${activeUrl}#toolbar=0&navpanes=0&view=FitH`}
+              src={`${activeUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              className="w-full h-full border-none pointer-events-auto"
               title="Resume Preview"
-              className="w-full h-full border-0 bg-white rounded"
             />
           </div>
-        )}
+        ) : !compiling && !activeError ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center max-w-sm space-y-3">
+            <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground border border-border">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-foreground">No Document Rendered</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Click <span className="font-semibold text-foreground">"Compile (Ctrl+S)"</span> or update your form details to generate a preview.
+              </p>
+            </div>
+            {handleRetry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                className="text-xs gap-1.5 font-medium border-border"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Compile Now</span>
+              </Button>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );
