@@ -146,7 +146,7 @@ export default function SettingsPage() {
                 <Server className="w-3.5 h-3.5 text-foreground" />
                 <span>Active Engines</span>
               </div>
-              <span className="font-mono font-medium text-foreground">pdflatex (Overleaf compatible) / Tectonic</span>
+              <span className="font-mono font-medium text-foreground">pdflatex / xelatex / lualatex / Tectonic</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-border">
               <div className="flex items-center gap-2 text-muted-foreground">

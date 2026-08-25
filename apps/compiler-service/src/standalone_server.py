@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ResumeForge LaTeX Compiler Microservice Server
-Robust compiler supporting pdflatex (Overleaf compatible) and tectonic engines with error recovery.
+ResumeForge Universal LaTeX Compiler Microservice Server
+Robust compiler supporting pdflatex, xelatex, lualatex, and tectonic engines with smart auto-detection and multi-engine failover.
 """
 
 import http.server
@@ -17,6 +17,45 @@ from urllib.parse import urlparse
 
 PORT = int(os.environ.get("PORT", "8000"))
 TIMEOUT_SECONDS = int(os.environ.get("COMPILER_TIMEOUT", "15"))
+
+def detect_best_engines(tex_source: str, preferred_engine: str = "pdflatex"):
+    """
+    Intelligently orders compilation engines based on document features.
+    """
+    has_pdflatex = shutil.which("pdflatex") is not None
+    has_xelatex = shutil.which("xelatex") is not None
+    has_lualatex = shutil.which("lualatex") is not None
+    has_tectonic = shutil.which("tectonic") is not None
+
+    available = {
+        "pdflatex": has_pdflatex,
+        "xelatex": has_xelatex,
+        "lualatex": has_lualatex,
+        "tectonic": has_tectonic,
+    }
+
+    # Check for XeTeX / LuaTeX specific packages and font loaders
+    requires_xetex = bool(re.search(
+        r"\\usepackage\{(fontspec|xeCJK|unicode-math|xltxtra|fontmfizz)\}|\\setmainfont|\\setmonofont|\\setsansfont",
+        tex_source,
+        re.IGNORECASE
+    ))
+
+    # Construct ordered candidate list
+    ordered_candidates = []
+
+    if requires_xetex:
+        order = ["xelatex", "tectonic", "lualatex", "pdflatex"]
+    elif preferred_engine and preferred_engine in available:
+        order = [preferred_engine] + [e for e in ["pdflatex", "tectonic", "xelatex", "lualatex"] if e != preferred_engine]
+    else:
+        order = ["pdflatex", "tectonic", "xelatex", "lualatex"]
+
+    for eng in order:
+        if available.get(eng) and eng not in ordered_candidates:
+            ordered_candidates.append(eng)
+
+    return ordered_candidates
 
 def parse_latex_log(log_text: str):
     """
@@ -74,6 +113,8 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path in ("/health", "/"):
             has_pdflatex = shutil.which("pdflatex") is not None
+            has_xelatex = shutil.which("xelatex") is not None
+            has_lualatex = shutil.which("lualatex") is not None
             has_tectonic = shutil.which("tectonic") is not None
 
             self.send_response(200)
@@ -82,11 +123,13 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             payload = {
-                "status": "healthy" if (has_pdflatex or has_tectonic) else "degraded",
-                "engine": "pdflatex" if has_pdflatex else ("tectonic" if has_tectonic else "none"),
+                "status": "healthy" if any([has_pdflatex, has_xelatex, has_lualatex, has_tectonic]) else "degraded",
+                "engine": "pdflatex" if has_pdflatex else ("xelatex" if has_xelatex else "tectonic"),
                 "pdflatex_available": has_pdflatex,
+                "xelatex_available": has_xelatex,
+                "lualatex_available": has_lualatex,
                 "tectonic_available": has_tectonic,
-                "version": "1.0.0 (Overleaf pdflatex compatible)",
+                "version": "1.2.0 (Universal LaTeX - pdflatex, xelatex, lualatex, tectonic)",
             }
             self.wfile.write(json.dumps(payload).encode("utf-8"))
         else:
@@ -101,7 +144,7 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
             try:
                 data = json.loads(body_bytes.decode("utf-8"))
-                tex_source = data.get("tex", "")
+                tex_source = data.get("tex") or data.get("tex_source") or data.get("latex") or ""
                 preferred_engine = data.get("engine", "pdflatex")
             except Exception:
                 self.send_response(400)
@@ -119,26 +162,18 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": "LaTeX document is empty or too short."}).encode("utf-8"))
                 return
 
-            has_pdflatex = shutil.which("pdflatex") is not None
-            has_tectonic = shutil.which("tectonic") is not None
+            engines_to_try = detect_best_engines(tex_source, preferred_engine)
 
-            if not has_pdflatex and not has_tectonic:
+            if not engines_to_try:
                 self.send_response(500)
                 self._send_cors_headers()
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     "success": False,
-                    "error": "No LaTeX compiler found (pdflatex or tectonic). Please ensure TeX Live is installed.",
+                    "error": "No LaTeX compiler found. Please ensure TeX Live or Tectonic is installed.",
                 }).encode("utf-8"))
                 return
-
-            # Prioritized order of engines to try
-            engines_to_try = []
-            if preferred_engine == "tectonic" and has_tectonic:
-                engines_to_try = ["tectonic", "pdflatex"] if has_pdflatex else ["tectonic"]
-            else:
-                engines_to_try = ["pdflatex", "tectonic"] if (has_pdflatex and has_tectonic) else (["pdflatex"] if has_pdflatex else ["tectonic"])
 
             temp_dir = tempfile.mkdtemp(prefix="tex_compile_")
             last_err_output = ""
@@ -152,10 +187,9 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 start_time = time.time()
 
                 for eng in engines_to_try:
-                    if eng == "pdflatex":
-                        # Non-stop mode without halting on minor non-fatal warnings
+                    if eng in ("pdflatex", "xelatex", "lualatex"):
                         cmd = [
-                            "pdflatex",
+                            eng,
                             "-interaction=nonstopmode",
                             "-no-shell-escape",
                             "-output-directory", temp_dir,
@@ -179,6 +213,21 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                         # Check if PDF was successfully generated
                         if os.path.exists(pdf_file) and os.path.getsize(pdf_file) > 100:
+                            # If document uses cross-references or tabularx, run a fast 2nd pass for perfect alignment
+                            if re.search(r"\\(pageref|ref|cite|label|totpages)", tex_source):
+                                try:
+                                    subprocess.run(
+                                        cmd,
+                                        cwd=temp_dir,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        timeout=TIMEOUT_SECONDS,
+                                        text=True,
+                                        errors="replace"
+                                    )
+                                except Exception:
+                                    pass
+
                             with open(pdf_file, "rb") as f:
                                 pdf_bytes = f.read()
 
@@ -193,7 +242,7 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                             self.wfile.write(pdf_bytes)
                             return
                     except subprocess.TimeoutExpired:
-                        last_err_output = f"Compilation timed out after {TIMEOUT_SECONDS}s."
+                        last_err_output = f"Compilation timed out after {TIMEOUT_SECONDS}s with engine '{eng}'."
                     except Exception as ex:
                         last_err_output = str(ex)
 
@@ -220,7 +269,7 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), CompilerHTTPRequestHandler) as httpd:
-        print(f"ResumeForge LaTeX Compiler Server listening on http://0.0.0.0:{PORT} (Engine: pdflatex/tectonic)")
+        print(f"ResumeForge Universal LaTeX Compiler Server listening on http://0.0.0.0:{PORT}")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

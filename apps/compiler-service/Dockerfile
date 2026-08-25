@@ -1,21 +1,30 @@
-# Multi-stage secure Dockerfile for LaTeX Compiler Service
+# Multi-engine, comprehensive LaTeX Compiler Service Dockerfile
 FROM python:3.11-slim-bookworm
 
-# Install runtime libraries, fonts, and LaTeX engines (pdflatex, full TeX Live packages)
+# Install runtime libraries, fonts, and LaTeX engines (pdflatex, xelatex, lualatex, full TeX Live packages)
 RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false update && \
     apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     fontconfig \
+    cm-super \
     fonts-lmodern \
     fonts-texgyre \
+    fonts-font-awesome \
+    fonts-roboto \
+    fonts-open-sans \
     texlive-fonts-recommended \
     texlive-fonts-extra \
     texlive-latex-recommended \
     texlive-latex-extra \
+    texlive-xetex \
+    texlive-luatex \
+    texlive-pictures \
+    texlive-science \
     texlive-plain-generic \
     tar \
     gzip \
+    && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
 
 # Install official precompiled standalone static musl Tectonic binary (zero glibc issue)
@@ -41,7 +50,7 @@ RUN chown -R sandboxuser:sandboxgroup /app /home/sandboxuser
 USER sandboxuser
 
 ENV PYTHONUNBUFFERED=1
-ENV COMPILER_TIMEOUT=12
+ENV COMPILER_TIMEOUT=15
 ENV MAX_INPUT_BYTES=2097152
 
 EXPOSE 8000
