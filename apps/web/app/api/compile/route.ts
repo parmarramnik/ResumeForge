@@ -35,15 +35,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Validate Request Body
+    // 2. Validate Request Body (Normalize both `tex` and `tex_source` keys)
     const body = await req.json();
-    const parseResult = compileRequestSchema.safeParse(body);
+    const normalizedPayload = {
+      ...body,
+      tex: body.tex || body.tex_source || body.latex || '',
+    };
+
+    const parseResult = compileRequestSchema.safeParse(normalizedPayload);
 
     if (!parseResult.success) {
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || 'Invalid compilation payload',
+          error: parseResult.error.errors[0]?.message || 'Invalid compilation payload: LaTeX content is required',
         },
         { status: 400 }
       );

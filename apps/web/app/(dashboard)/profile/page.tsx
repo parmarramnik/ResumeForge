@@ -77,12 +77,9 @@ export default function ProfilePage() {
           setLinkedin(profile?.linkedin || '');
           setWebsite(profile?.website || '');
         } else {
-          // Guest / Demo fallback
           setEmail('guest@resumeforge.dev');
           setFullName('Guest User');
           setTitle('Demo Mode');
-          setPhone('');
-          setLocation('');
           setBio('Exploring ResumeForge in Guest / Demo mode.');
           setJoinedAt('Current Session');
         }
@@ -191,7 +188,7 @@ export default function ProfilePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${fullName.toLowerCase().replace(/\s+/g, '_')}_profile.json`;
+    a.download = `${(fullName || 'profile').toLowerCase().replace(/\s+/g, '_')}_profile.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -199,10 +196,10 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6 pb-12">
-        {/* Profile Banner */}
+        {/* Profile Header Banner */}
         <div className="bg-card border border-border rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-lg bg-foreground text-background flex items-center justify-center text-2xl font-bold font-mono shrink-0 shadow">
+            <div className="w-14 h-14 rounded-lg bg-foreground text-background flex items-center justify-center text-xl font-bold font-mono shrink-0 shadow">
               {fullName?.charAt(0) || 'U'}
             </div>
             <div className="space-y-1">
@@ -228,7 +225,7 @@ export default function ProfilePage() {
               variant="outline"
               size="sm"
               onClick={handleExportProfile}
-              className="text-xs gap-1.5 h-8 font-medium"
+              className="text-xs gap-1.5 h-8 font-medium border-border"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export JSON</span>
@@ -241,7 +238,7 @@ export default function ProfilePage() {
             >
               {profileSaved ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
                   <span>Saved!</span>
                 </>
               ) : (
@@ -251,7 +248,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Information Form */}
+        {/* 1. Personal & Professional Details */}
         <Card className="border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -294,7 +291,7 @@ export default function ProfilePage() {
                       <Input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Lead Architect / Senior Engineer"
+                        placeholder="e.g. Senior Software Engineer"
                         className="text-xs pl-9"
                       />
                     </div>
@@ -350,7 +347,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Social Links */}
-                <div className="pt-2 border-t border-border space-y-3">
+                <div className="pt-3 border-t border-border space-y-3">
                   <span className="text-xs font-semibold text-foreground">Online Profiles & Links</span>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
@@ -395,7 +392,7 @@ export default function ProfilePage() {
             )}
           </CardContent>
           <CardFooter className="flex items-center justify-between border-t border-border pt-4">
-            <span className="text-[11px] text-muted-foreground">Changes reflect in your active session.</span>
+            <span className="text-[11px] text-muted-foreground">Changes save directly to your profile.</span>
             <Button
               size="sm"
               onClick={handleSaveProfile}
@@ -404,7 +401,7 @@ export default function ProfilePage() {
             >
               {profileSaved ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
                   <span>Saved!</span>
                 </>
               ) : (
@@ -414,7 +411,7 @@ export default function ProfilePage() {
           </CardFooter>
         </Card>
 
-        {/* Change Password Card */}
+        {/* 2. Security & Password */}
         <Card className="border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">

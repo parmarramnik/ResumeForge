@@ -11,6 +11,7 @@ interface MonacoLatexEditorProps {
   onCompile?: () => void;
   errors?: CompileErrorDetail[];
   theme?: 'vs-dark' | 'vs' | 'light' | 'dark';
+  fontSize?: number;
   readOnly?: boolean;
   highlightLine?: number | null;
 }
@@ -21,6 +22,7 @@ export function MonacoLatexEditor({
   onCompile,
   errors = [],
   theme = 'vs',
+  fontSize = 13,
   readOnly = false,
   highlightLine = null,
 }: MonacoLatexEditorProps) {
@@ -39,9 +41,9 @@ export function MonacoLatexEditor({
 
     // Formatting & editor configuration
     ed.updateOptions({
-      fontSize: 13,
+      fontSize: fontSize || 13,
       fontFamily: "'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
-      lineHeight: 20,
+      lineHeight: Math.round((fontSize || 13) * 1.55),
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       wordWrap: 'on',
@@ -49,8 +51,19 @@ export function MonacoLatexEditor({
       folding: true,
       renderLineHighlight: 'all',
       tabSize: 2,
+      mouseWheelZoom: true,
     });
   };
+
+  // Update font size dynamically whenever fontSize prop changes
+  useEffect(() => {
+    if (editorRef.current && fontSize) {
+      editorRef.current.updateOptions({
+        fontSize,
+        lineHeight: Math.round(fontSize * 1.55),
+      });
+    }
+  }, [fontSize]);
 
   // Jump to highlighted line on error click
   useEffect(() => {
@@ -109,6 +122,7 @@ export function MonacoLatexEditor({
           readOnly,
           cursorBlinking: 'smooth',
           smoothScrolling: true,
+          mouseWheelZoom: true,
         }}
       />
     </div>

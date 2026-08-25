@@ -52,34 +52,43 @@ export function Sidebar({ className }: SidebarProps) {
       )}
     >
       <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-        {/* Brand Header & Toggle */}
-        <div className={cn(
-          'h-14 flex items-center border-b border-border transition-all duration-200',
-          isCollapsed ? 'justify-center px-0' : 'justify-between px-4'
-        )}>
-          <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center font-bold text-sm shrink-0">
-              <FileCode2 className="w-4 h-4" />
-            </div>
-            {!isCollapsed && (
-              <span className="font-semibold tracking-tight text-sm truncate">
-                ResumeForge
-              </span>
-            )}
-          </Link>
-
-          {!isCollapsed && (
+        {/* Brand Header / Single Top Toggle Button */}
+        {isCollapsed ? (
+          // Collapsed State: Logo is removed, only the single expand toggle button is displayed centered
+          <div className="h-14 flex items-center justify-center border-b border-border">
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          // Expanded State: Logo and name on left, collapse toggle button directly on the right
+          <div className="h-14 px-4 flex items-center justify-between border-b border-border">
+            <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center font-bold text-sm shrink-0">
+                <FileCode2 className="w-4 h-4" />
+              </div>
+              <span className="font-semibold tracking-tight text-sm truncate">
+                ResumeForge
+              </span>
+            </Link>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
               title="Collapse sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Navigation Sections */}
         <div className="px-2 py-4 space-y-6">
@@ -166,21 +175,6 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </div>
       </div>
-
-      {/* Collapsed Bottom Expand Button */}
-      {isCollapsed && (
-        <div className="p-2 border-t border-border flex justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title="Expand sidebar"
-          >
-            <PanelLeftOpen className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
     </aside>
   );
 }

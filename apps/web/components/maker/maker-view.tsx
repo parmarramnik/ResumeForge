@@ -13,6 +13,8 @@ import {
   ChevronDown,
   Check,
   GripVertical,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
@@ -29,6 +31,7 @@ interface MonacoEditorComponentProps {
   onCompile?: () => void;
   errors?: CompileErrorDetail[];
   theme?: 'vs-dark' | 'light' | 'vs';
+  fontSize?: number;
   readOnly?: boolean;
   highlightLine?: number | null;
 }
@@ -57,9 +60,30 @@ export function MakerView({ initialResume }: MakerViewProps) {
   const [isErrorDrawerOpen, setIsErrorDrawerOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const [fontSize, setFontSize] = useState<number>(14);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const localBlobCacheRef = useRef<Map<string, Blob>>(new Map());
+
+  // Load editor preferences from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedFontSize = localStorage.getItem('resumeforge_editor_fontsize');
+      if (savedFontSize) {
+        setFontSize(Number(savedFontSize) || 14);
+      }
+    }
+  }, []);
+
+  const handleUpdateFontSize = (delta: number) => {
+    setFontSize((prev) => {
+      const next = Math.max(10, Math.min(28, prev + delta));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('resumeforge_editor_fontsize', String(next));
+      }
+      return next;
+    });
+  };
 
   // Check if opened from Generator
   useEffect(() => {
@@ -79,13 +103,11 @@ export function MakerView({ initialResume }: MakerViewProps) {
     const cachedBlob = localBlobCacheRef.current.get(currentCode);
     if (cachedBlob) {
       setPdfBlob(cachedBlob);
-      setErrorMessage(null);
       setCompileErrors([]);
-      setIsErrorDrawerOpen(false);
+      setErrorMessage(null);
       return;
     }
 
-    // Cancel any previous in-flight compilation request immediately
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -93,8 +115,8 @@ export function MakerView({ initialResume }: MakerViewProps) {
     abortControllerRef.current = controller;
 
     setIsCompiling(true);
-    setErrorMessage(null);
     setCompileErrors([]);
+    setErrorMessage(null);
 
     try {
       const res = await fetch('/api/compile', {
@@ -105,10 +127,14 @@ export function MakerView({ initialResume }: MakerViewProps) {
       });
 
       if (!res.ok) {
-        const errorJson = await res.json().catch(() => ({}));
-        const mainError = errorJson.error || 'Compilation failed';
-        setErrorMessage(mainError);
-        setCompileErrors(errorJson.errors || (errorJson.line ? [{ line: errorJson.line, message: mainError }] : []));
+        let errData;
+        try {
+          errData = await res.json();
+        } catch {
+          errData = { error: 'Compilation failed' };
+        }
+        setErrorMessage(errData.error || 'Compilation failed');
+        setCompileErrors(errData.details || []);
         setIsErrorDrawerOpen(true);
         return;
       }
@@ -116,15 +142,11 @@ export function MakerView({ initialResume }: MakerViewProps) {
       const blob = await res.blob();
       localBlobCacheRef.current.set(currentCode, blob);
       setPdfBlob(blob);
-      setErrorMessage(null);
       setCompileErrors([]);
-      setIsErrorDrawerOpen(false);
+      setErrorMessage(null);
     } catch (err: unknown) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        // Ignored: new request supersedes aborted one
-        return;
-      }
-      setErrorMessage(err instanceof Error ? err.message : 'Network error compiling document');
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setErrorMessage('Network or server error during compilation.');
       setIsErrorDrawerOpen(true);
     } finally {
       setIsCompiling(false);
@@ -139,67 +161,92 @@ export function MakerView({ initialResume }: MakerViewProps) {
         abortControllerRef.current.abort();
       }
     };
-  }, []);
+  }, [handleCompile]);
 
-  // Save handler
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await fetch('/api/resumes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          service_type: 'maker',
-          raw_tex: texContent,
-        }),
-      });
+      if (initialResume?.id) {
+        await fetch(`/api/resumes/${initialResume.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, raw_tex: texContent }),
+        });
+      } else {
+        await fetch('/api/resumes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, raw_tex: texContent, mode: 'latex' }),
+        });
+      }
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2500);
-    } catch {
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2500);
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Save failed', err);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Export .tex file
   const handleExportTex = () => {
     const blob = new Blob([texContent], { type: 'text/x-tex;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${title.toLowerCase().replace(/\s+/g, '-')}.tex`;
-    document.body.appendChild(a);
+    a.download = `${title.toLowerCase().replace(/\s+/g, '_') || 'resume'}.tex`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
   const handleResetToTemplate = () => {
-    if (window.confirm('Reset editor to default template? Unsaved changes will be lost.')) {
+    if (window.confirm('Reset code editor to original standard LaTeX template? Any unsaved edits will be replaced.')) {
       setTexContent(INITIAL_RAW_TEX);
+      localBlobCacheRef.current.clear();
     }
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-background">
-      {/* Top Action Toolbar */}
-      <div className="h-14 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-background overflow-hidden select-none">
+      {/* Top IDE Toolbar */}
+      <div className="h-12 border-b border-border bg-card px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <FileCode className="w-4 h-4 text-foreground" />
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="h-8 w-72 text-xs font-semibold bg-transparent border-transparent hover:border-border focus:border-border px-2"
-          />
-          <Badge variant="outline" className="text-[10px] uppercase font-mono text-muted-foreground border-border">
-            Code Editor
+          <div className="flex items-center gap-2">
+            <FileCode className="w-4 h-4 text-foreground" />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="h-7 text-xs font-semibold w-52 md:w-64 bg-transparent border-transparent hover:border-border focus:border-border focus:bg-background px-2"
+            />
+          </div>
+          <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono border-border">
+            LATEX IDE
           </Badge>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Font Size Adjuster in Toolbar */}
+          <div className="flex items-center gap-1 bg-muted/60 border border-border rounded-md px-1.5 py-0.5" title="Adjust Editor Font Size (or use Ctrl+Wheel)">
+            <button
+              onClick={() => handleUpdateFontSize(-1)}
+              disabled={fontSize <= 10}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-30 p-0.5"
+              title="Decrease Font Size"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="font-mono text-[11px] font-medium px-1 text-foreground">
+              {fontSize}px
+            </span>
+            <button
+              onClick={() => handleUpdateFontSize(1)}
+              disabled={fontSize >= 28}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-30 p-0.5"
+              title="Increase Font Size"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+
           <Button
             variant="ghost"
             size="sm"
@@ -264,6 +311,7 @@ export function MakerView({ initialResume }: MakerViewProps) {
               onChange={(val) => setTexContent(val || '')}
               onCompile={handleCompile}
               errors={compileErrors}
+              fontSize={fontSize}
               theme={theme === 'dark' ? 'vs-dark' : 'vs'}
               highlightLine={highlightLine}
             />
@@ -278,7 +326,7 @@ export function MakerView({ initialResume }: MakerViewProps) {
               >
                 <div className="flex items-center gap-2 font-medium">
                   <AlertTriangle className="w-4 h-4 text-foreground" />
-                  <span>Compilation Diagnostic ({compileErrors.length} issues)</span>
+                  <span className="text-foreground font-semibold">LaTeX Compilation Output</span>
                 </div>
                 {isErrorDrawerOpen ? (
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -288,19 +336,19 @@ export function MakerView({ initialResume }: MakerViewProps) {
               </div>
 
               {isErrorDrawerOpen && (
-                <div className="px-4 pb-3 max-h-48 overflow-y-auto space-y-1.5 font-mono text-[11px]">
-                  <p className="font-semibold text-foreground">{errorMessage}</p>
-                  {compileErrors.map((err, idx) => (
+                <div className="p-3 bg-muted/40 border-t border-border max-h-48 overflow-y-auto font-mono text-[11px] space-y-1.5">
+                  <div className="text-foreground font-medium">{errorMessage}</div>
+                  {compileErrors.map((err, i) => (
                     <div
-                      key={idx}
-                      onClick={() => setHighlightLine(err.line ?? null)}
-                      className="p-1.5 rounded bg-muted/40 border border-border hover:border-foreground/40 text-foreground cursor-pointer flex items-center justify-between"
+                      key={i}
+                      onClick={() => setHighlightLine(err.line || null)}
+                      className="p-1.5 rounded bg-background border border-border flex items-start justify-between cursor-pointer hover:border-foreground"
                     >
-                      <span>{err.message}</span>
+                      <span className="text-foreground">{err.message}</span>
                       {err.line && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-foreground text-background font-bold">
+                        <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
                           Line {err.line}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   ))}
@@ -310,21 +358,14 @@ export function MakerView({ initialResume }: MakerViewProps) {
           )}
         </Panel>
 
-        {/* Overleaf-Style Drag Handle */}
-        <PanelResizeHandle className="w-2 relative bg-border/70 hover:bg-foreground/30 transition-colors cursor-col-resize flex items-center justify-center group z-20 select-none">
-          <div className="w-1 h-8 rounded-full bg-muted-foreground/40 group-hover:bg-foreground transition-colors flex items-center justify-center">
-            <GripVertical className="w-3 h-3 text-muted-foreground/70 group-hover:text-background transition-colors" />
-          </div>
+        {/* Draggable Divider Handle */}
+        <PanelResizeHandle className="w-1.5 bg-border hover:bg-foreground/50 transition-colors flex items-center justify-center cursor-col-resize group select-none">
+          <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
         </PanelResizeHandle>
 
-        {/* Right Pane: High Performance PDF Viewer */}
+        {/* Right Pane: Embedded PDF Viewer */}
         <Panel defaultSize={50} minSize={20} className="flex flex-col bg-muted/20 overflow-hidden">
-          <ResumePdfViewer
-            pdfBlob={pdfBlob}
-            isLoading={isCompiling}
-            errorMessage={errorMessage}
-            onRetry={handleCompile}
-          />
+          <ResumePdfViewer pdfBlob={pdfBlob} isCompiling={isCompiling} />
         </Panel>
       </PanelGroup>
     </div>

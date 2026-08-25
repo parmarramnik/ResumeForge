@@ -143,12 +143,14 @@ export const MASTER_LATEX_TEMPLATE = String.raw`\documentclass[letterpaper,10pt]
 {{#if coding_profiles}}
 %-----------CODING PROFILES-----------
 \section{Coding Profiles}
-  \resumeSubHeadingListStart
-{{#each coding_profiles}}
-    \resumeProjectHeading
-      { \link{{{url}}}{\textbf{{{platform}}:}} {{description}} }{}
-{{/each}}
-  \resumeSubHeadingListEnd
+ \begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \small{\item{
+    {{#each coding_profiles}}
+     \link{{{url}}}{\textbf{{{platform}}:}}\hspace{0.3em}{{description}}{{#unless @last}}\hspace{1.5em}$|$\hspace{1.5em}{{/unless}}
+    {{/each}}
+    }}
+ \end{itemize}
+ \vspace{-2pt}
 {{/if}}
 
 {{#if projects}}
@@ -157,7 +159,7 @@ export const MASTER_LATEX_TEMPLATE = String.raw`\documentclass[letterpaper,10pt]
     \resumeSubHeadingListStart
 {{#each projects}}
       \resumeProjectHeading
-          { \textbf{{{name}}}{{#if technologies}} $|$ \emph{{{technologies}}}{{/if}} }{ {{#if github}}\link{{{github}}}{GitHub}{{else}}{{#if live_url}}\link{{{live_url}}}{Demo}{{/if}}{{/if}} }
+          {\textbf{{{name}}}{{#if technologies}} $|$ \emph{{{technologies}}}{{/if}}}{ {{#if github}}\link{{{github}}}{GitHub}{{else}}{{#if live_url}}\link{{{live_url}}}{Demo}{{/if}}{{/if}} }
           {{#if bullets}}
           \resumeItemListStart
           {{#each bullets}}
@@ -172,11 +174,11 @@ export const MASTER_LATEX_TEMPLATE = String.raw`\documentclass[letterpaper,10pt]
 {{#if achievements}}
 %-----------ACHIEVEMENTS-----------
 \section{Achievements}
-    \resumeItemListStart
-    {{#each achievements}}
-      \resumeItem{ \textbf{{{title}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\link{{{url}}}{[Certificate]}{{/if}} }
-    {{/each}}
-    \resumeItemListEnd
+  \resumeItemListStart
+{{#each achievements}}
+    \resumeItem{\textbf{{{title}}}{{#if description}} -- {{description}}{{/if}}{{#if url}} \link{{{url}}}{[Certificate]}{{/if}}}
+{{/each}}
+  \resumeItemListEnd
 {{/if}}
 
 \end{document}`;
@@ -298,52 +300,49 @@ export const INITIAL_RAW_TEX = String.raw`\documentclass[letterpaper,10pt]{artic
 %-----------EXPERIENCE-----------
 \section{Experience}
   \resumeSubHeadingListStart
-
     \resumeSubheading
       {NovaStack Technologies}{Vadodara, Gujarat}
       {Software Engineer Intern $|$ React, FastAPI, PostgreSQL, Redis}{May 2026 -- Jul 2026}
       \resumeItemListStart
-        \resumeItem{Developed \textbf{REST APIs} and secured application services using \textbf{JWT} and \textbf{RBAC} for a collaborative project management platform.}
-        \resumeItem{Designed a version control module using \textbf{SQLAlchemy} and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.}
+        \resumeItem{Developed REST APIs and secured application services using JWT and RBAC for a collaborative project management platform.}
+        \resumeItem{Designed a version control module using SQLAlchemy and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.}
       \resumeItemListEnd
-
   \resumeSubHeadingListEnd
 
 %-----------CODING PROFILES-----------
 \section{Coding Profiles}
-  \resumeSubHeadingListStart
-    \resumeProjectHeading
-      {\link{https://leetcode.com/u/arjun_mehta_dev/}{\textbf{LeetCode:}} Solved 275+ algorithmic problems}      
-      {\link{https://codeforces.com/profile/arjun_mehta01}{\textbf{Codeforces:}} Solved 180+ problems}
-  \resumeSubHeadingListEnd
+ \begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \small{\item{
+     \link{https://leetcode.com/u/arjun_mehta_dev/}{\textbf{LeetCode:}}\hspace{0.3em}Solved 275+ algorithmic problems\hspace{1.5em}$|$\hspace{1.5em}\link{https://codeforces.com/profile/arjun_mehta01}{\textbf{Codeforces:}}\hspace{0.3em}Solved 180+ problems
+    }}
+ \end{itemize}
+ \vspace{-2pt}
 
 %-----------PROJECTS-----------
 \section{Projects}
     \resumeSubHeadingListStart
-
       \resumeProjectHeading
-          {\textbf{StudySphere - Collaborative Learning Platform} $|$ \emph{FastAPI, React, PostgreSQL, Docker}}{\link{https://github.com/arjunmehta-dev/studysphere}{GitHub}}
+          {\textbf{StudySphere - Collaborative Learning Platform} $|$ \emph{FastAPI, React, PostgreSQL, Docker}}{ \link{https://github.com/arjunmehta-dev/studysphere}{GitHub} }
           \resumeItemListStart
-            \resumeItem{Built a full-stack learning platform featuring structured study modules, automated testing, and a \textbf{Monaco Editor}-based coding workspace protected using \textbf{JWT} and \textbf{RBAC}.}
-            \resumeItem{Implemented a Git-inspired document versioning system using \textbf{SQLAlchemy} and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.}
+            \resumeItem{Built a full-stack learning platform featuring structured study modules, automated testing, and a Monaco Editor-based coding workspace protected using JWT and RBAC.}
+            \resumeItem{Implemented a Git-inspired document versioning system using SQLAlchemy and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.}
           \resumeItemListEnd
 
       \resumeProjectHeading
-          {\textbf{SecureTrack - Security Awareness Platform} $|$ \emph{MERN, Tailwind, Nodemailer, JWT}}{\link{https://github.com/arjunmehta-dev/securetrack}{GitHub}}
+          {\textbf{SecureTrack - Security Awareness Platform} $|$ \emph{MERN, Tailwind, Nodemailer, JWT}}{ \link{https://github.com/arjunmehta-dev/securetrack}{GitHub} }
           \resumeItemListStart
-            \resumeItem{Developed a full-stack \textbf{security awareness} platform for controlled simulations and employee interaction analytics, including email telemetry, interaction tracking, and reporting.}
-            \resumeItem{Implemented \textbf{role-based access}, bulk user onboarding, and dynamic risk dashboards with analytics visualizations and gamified security scores.}
+            \resumeItem{Developed a full-stack security awareness platform for controlled simulations and employee interaction analytics, including email telemetry, interaction tracking, and reporting.}
+            \resumeItem{Implemented role-based access, bulk user onboarding, and dynamic risk dashboards with analytics visualizations and gamified security scores.}
           \resumeItemListEnd
-
     \resumeSubHeadingListEnd
 
 %-----------ACHIEVEMENTS-----------
 \section{Achievements}
-    \resumeItemListStart
-      \resumeItem{\textbf{Winner} of National Student Innovation Challenge 2026 -- FinTech Automation Track \link{https://example.com/certificates/fintech-2026}{[Certificate]}}
-      \resumeItem{\textbf{Top 10} in CodeSprint Hackathon 2026 -- Smart Campus Assistant \link{https://example.com/certificates/codesprint-2026}{[Certificate]}}
-      \resumeItem{\textbf{Finalist} in BuildForTomorrow Hackathon -- Environmental Monitoring Platform \link{https://example.com/certificates/buildfortomorrow-2026}{[Certificate]}}
-    \resumeItemListEnd
+  \resumeItemListStart
+    \resumeItem{\textbf{Winner of National Student Innovation Challenge 2026} -- FinTech Automation Track \link{https://example.com/certificates/fintech-2026}{[Certificate]}}
+    \resumeItem{\textbf{Top 10 in CodeSprint Hackathon 2026} -- Smart Campus Assistant \link{https://example.com/certificates/codesprint-2026}{[Certificate]}}
+    \resumeItem{\textbf{Finalist in BuildForTomorrow Hackathon} -- Environmental Monitoring Platform \link{https://example.com/certificates/buildfortomorrow-2026}{[Certificate]}}
+  \resumeItemListEnd
 
 \end{document}`;
 

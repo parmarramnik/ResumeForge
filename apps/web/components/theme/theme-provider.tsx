@@ -18,14 +18,13 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const isDark = document.documentElement.classList.contains('dark');
     const saved = localStorage.getItem('resumeforge_theme') as Theme | null;
-    const initialTheme = saved || 'light';
-    setThemeState(initialTheme);
-    applyTheme(initialTheme);
+    const active = saved || (isDark ? 'dark' : 'light');
+    setThemeState(active);
+    applyTheme(active);
   }, []);
 
   const applyTheme = (newTheme: Theme) => {
