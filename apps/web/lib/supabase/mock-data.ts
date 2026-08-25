@@ -10,323 +10,342 @@ export const CURRENT_USER_MOCK: UserProfile = {
   updated_at: new Date().toISOString(),
 };
 
-export const MASTER_LATEX_TEMPLATE = `\\documentclass[letterpaper,10pt]{article}
+export const MASTER_LATEX_TEMPLATE = String.raw`\documentclass[letterpaper,10pt]{article}
 
-\\usepackage{latexsym}
-\\usepackage[empty]{fullpage}
-\\usepackage{titlesec}
-\\usepackage{marvosym}
-\\usepackage[usenames,dvipsnames]{color}
-\\usepackage{verbatim}
-\\usepackage{enumitem}
-\\usepackage[normalem]{ulem} % Added for clean underlines
-\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
-\\usepackage{fancyhdr}
-\\usepackage[english]{babel}
-\\usepackage{tabularx}
-\\input{glyphtounicode}
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[normalem]{ulem} % Added for clean underlines
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
 
-\\pagestyle{fancy}
-\\fancyhf{}
-\\fancyfoot{}
-\\renewcommand{\\headrulewidth}{0pt}
-\\renewcommand{\\footrulewidth}{0pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
 
 % Page Margins tuned for exact single-page fill
-\\addtolength{\\oddsidemargin}{-0.5in}
-\\addtolength{\\evensidemargin}{-0.5in}
-\\addtolength{\\textwidth}{1.0in}
-\\addtolength{\\topmargin}{-0.5in}
-\\addtolength{\\textheight}{1.0in}
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
 
-\\urlstyle{same}
+\urlstyle{same}
 
-\\raggedbottom
-\\raggedright
-\\setlength{\\tabcolsep}{0in}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
 
 % Section formatting with clean lines and balanced spacing
-\\titleformat{\\section}{
-  \\vspace{1pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{1pt}]
+\titleformat{\section}{
+  \vspace{1pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{1pt}]
 
-\\pdfgentounicode=1
+\pdfgentounicode=1
 
 % Custom command for underlined blue hyperlinks
-\\newcommand{\\link}[2]{\\href{#1}{\\uline{#2}}}
+\newcommand{\link}[2]{\href{#1}{\uline{#2}}}
 
 %-------------------------
 % Custom commands
-\\newcommand{\\resumeItem}[1]{
-  \\item\\small{
-    {#1 \\vspace{-1.5pt}}
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-1.5pt}}
   }
 }
 
-\\newcommand{\\resumeSubheading}[4]{
-  \\vspace{-1.5pt}\\item
-    \\begin{tabular*}{0.98\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{#1} & #2 \\\\
-      \\textit{\\small#3} & \\textit{\\small #4} \\\\
-    \\end{tabular*}\\vspace{-3pt}
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1.5pt}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-3pt}
 }
 
-\\newcommand{\\resumeProjectHeading}[2]{
-    \\vspace{-1.5pt}\\item
-    \\begin{tabular*}{0.98\\textwidth}{l@{\\extracolsep{\\fill}}r}
-      \\small#1 & #2 \\\\
-    \\end{tabular*}\\vspace{-3pt}
+\newcommand{\resumeProjectHeading}[2]{
+    \vspace{-1.5pt}\item
+    \begin{tabular*}{0.98\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-3pt}
 }
 
-\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
-\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}\\vspace{-1pt}}
-\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
-\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-2pt}}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{-1pt}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
 
-\\begin{document}
+\begin{document}
 
 %----------HEADING----------
-\\begin{center}
-    \\textbf{\\Huge \\scshape {{personal.name}}} \\\\ \\vspace{2pt}
-    \\small {{#if personal.phone}}{{personal.phone}} $|$ {{/if}}
-    \\link{mailto:{{personal.email}}}{{{personal.email}}}
-    {{#if personal.linkedin}} $|$ \\link{{{personal.linkedin}}}{LinkedIn}{{/if}}
-    {{#if personal.github}} $|$ \\link{{{personal.github}}}{GitHub}{{/if}}
-    {{#if personal.portfolio}} $|$ \\link{{{personal.portfolio}}}{Portfolio}{{/if}}
-\\end{center}
-\\vspace{-4pt}
+\begin{center}
+    \textbf{\Huge \scshape {{personal.name}}} \\ \vspace{2pt}
+    \small {{#if personal.phone}}{{personal.phone}} $|$ {{/if}}
+    \link{mailto:{{personal.email}}}{{{personal.email}}}
+    {{#if personal.linkedin}} $|$ \link{{{personal.linkedin}}}{LinkedIn}{{/if}}
+    {{#if personal.github}} $|$ \link{{{personal.github}}}{GitHub}{{/if}}
+    {{#if personal.portfolio}} $|$ \link{{{personal.portfolio}}}{Portfolio}{{/if}}
+\end{center}
+\vspace{-4pt}
 
 {{#if education}}
 %-----------EDUCATION-----------
-\\section{Education}
-  \\resumeSubHeadingListStart
+\section{Education}
+  \resumeSubHeadingListStart
 {{#each education}}
-    \\resumeSubheading
-      {{{institution}}}{{{#if gpa}}{{gpa}}{{else}}{{location}}{{/if}}}
-      {{{degree}}}{{#if field}} in {{field}}{{/if}}{{{start_date}} -- {{end_date}}}
+    \resumeSubheading
+      {{{institution}}}{{{gpa}}}
+      { {{degree}}{{#if field}} in {{field}}{{/if}} }{{{start_date}} -- {{end_date}}}
 {{/each}}
-  \\resumeSubHeadingListEnd
+  \resumeSubHeadingListEnd
 {{/if}}
 
 {{#if skills}}
-%-----------TECHNICAL SKILLS \\& COURSEWORK-----------
-\\section{Technical Skills \\& Coursework}
- \\begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
-    \\small{\\item{
+%-----------TECHNICAL SKILLS \& COURSEWORK-----------
+\section{Technical Skills \& Coursework}
+ \begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \small{\item{
     {{#each skills}}
-     \\textbf{{{category}}:}\\hspace{0.5em} {{skills}} \\\\[1.5pt]
+     \textbf{{{category}}:}\hspace{0.5em} {{skills}} \\[1.5pt]
     {{/each}}
     }}
- \\end{itemize}
- \\vspace{-2pt}
+ \end{itemize}
+ \vspace{-2pt}
 {{/if}}
 
 {{#if experience}}
 %-----------EXPERIENCE-----------
-\\section{Experience}
-  \\resumeSubHeadingListStart
+\section{Experience}
+  \resumeSubHeadingListStart
 {{#each experience}}
-    \\resumeSubheading
+    \resumeSubheading
       {{{company}}}{{{location}}}
-      {{{role}}}{{#if technologies}} $|$ {{technologies}}{{/if}}{{{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}}}
+      { {{role}}{{#if technologies}} $|$ {{technologies}}{{/if}} }{{{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}}}
       {{#if bullets}}
-      \\resumeItemListStart
+      \resumeItemListStart
       {{#each bullets}}
-        \\resumeItem{{{this}}}
+        \resumeItem{{{this}}}
       {{/each}}
-      \\resumeItemListEnd
+      \resumeItemListEnd
       {{/if}}
 {{/each}}
-  \\resumeSubHeadingListEnd
+  \resumeSubHeadingListEnd
+{{/if}}
+
+{{#if coding_profiles}}
+%-----------CODING PROFILES-----------
+\section{Coding Profiles}
+  \resumeSubHeadingListStart
+{{#each coding_profiles}}
+    \resumeProjectHeading
+      { \link{{{url}}}{\textbf{{{platform}}:}} {{description}} }{}
+{{/each}}
+  \resumeSubHeadingListEnd
 {{/if}}
 
 {{#if projects}}
 %-----------PROJECTS-----------
-\\section{Projects}
-    \\resumeSubHeadingListStart
+\section{Projects}
+    \resumeSubHeadingListStart
 {{#each projects}}
-      \\resumeProjectHeading
-          {\\textbf{{{name}}}}{{#if technologies}} $|$ \\emph{{{technologies}}}{{/if}}{{#if github}}{\\link{{{github}}}{GitHub}}{{else}}{{#if live_url}}{\\link{{{live_url}}}{Demo}}{{/if}}{{/if}}
+      \resumeProjectHeading
+          { \textbf{{{name}}}{{#if technologies}} $|$ \emph{{{technologies}}}{{/if}} }{ {{#if github}}\link{{{github}}}{GitHub}{{else}}{{#if live_url}}\link{{{live_url}}}{Demo}{{/if}}{{/if}} }
           {{#if bullets}}
-          \\resumeItemListStart
+          \resumeItemListStart
           {{#each bullets}}
-            \\resumeItem{{{this}}}
+            \resumeItem{{{this}}}
           {{/each}}
-          \\resumeItemListEnd
+          \resumeItemListEnd
           {{/if}}
 {{/each}}
-    \\resumeSubHeadingListEnd
+    \resumeSubHeadingListEnd
 {{/if}}
 
 {{#if achievements}}
 %-----------ACHIEVEMENTS-----------
-\\section{Achievements}
-    \\resumeItemListStart
+\section{Achievements}
+    \resumeItemListStart
     {{#each achievements}}
-      \\resumeItem{\\textbf{{{title}}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\\link{{{url}}}{[Certificate]}{{/if}}}
+      \resumeItem{ \textbf{{{title}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\link{{{url}}}{[Certificate]}{{/if}} }
     {{/each}}
-    \\resumeItemListEnd
+    \resumeItemListEnd
 {{/if}}
 
-\\end{document}`;
+\end{document}`;
 
-export const INITIAL_RAW_TEX = `\\documentclass[letterpaper,10pt]{article}
+export const INITIAL_RAW_TEX = String.raw`\documentclass[letterpaper,10pt]{article}
 
-\\usepackage{latexsym}
-\\usepackage[empty]{fullpage}
-\\usepackage{titlesec}
-\\usepackage{marvosym}
-\\usepackage[usenames,dvipsnames]{color}
-\\usepackage{verbatim}
-\\usepackage{enumitem}
-\\usepackage[normalem]{ulem} % Added for clean underlines
-\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
-\\usepackage{fancyhdr}
-\\usepackage[english]{babel}
-\\usepackage{tabularx}
-\\input{glyphtounicode}
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[normalem]{ulem} % Added for clean underlines
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref} % Blue hyperref links
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
 
-\\pagestyle{fancy}
-\\fancyhf{}
-\\fancyfoot{}
-\\renewcommand{\\headrulewidth}{0pt}
-\\renewcommand{\\footrulewidth}{0pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
 
 % Page Margins tuned for exact single-page fill
-\\addtolength{\\oddsidemargin}{-0.5in}
-\\addtolength{\\evensidemargin}{-0.5in}
-\\addtolength{\\textwidth}{1.0in}
-\\addtolength{\\topmargin}{-0.5in}
-\\addtolength{\\textheight}{1.0in}
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
 
-\\urlstyle{same}
+\urlstyle{same}
 
-\\raggedbottom
-\\raggedright
-\\setlength{\\tabcolsep}{0in}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
 
 % Section formatting with clean lines and balanced spacing
-\\titleformat{\\section}{
-  \\vspace{1pt}\\scshape\\raggedright\\large
-}{}{0em}{}[\\color{black}\\titlerule \\vspace{1pt}]
+\titleformat{\section}{
+  \vspace{1pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{1pt}]
 
-\\pdfgentounicode=1
+\pdfgentounicode=1
 
 % Custom command for underlined blue hyperlinks
-\\newcommand{\\link}[2]{\\href{#1}{\\uline{#2}}}
+\newcommand{\link}[2]{\href{#1}{\uline{#2}}}
 
 %-------------------------
 % Custom commands
-\\newcommand{\\resumeItem}[1]{
-  \\item\\small{
-    {#1 \\vspace{-1.5pt}}
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-1.5pt}}
   }
 }
 
-\\newcommand{\\resumeSubheading}[4]{
-  \\vspace{-1.5pt}\\item
-    \\begin{tabular*}{0.98\\textwidth}[t]{l@{\\extracolsep{\\fill}}r}
-      \\textbf{#1} & #2 \\\\
-      \\textit{\\small#3} & \\textit{\\small #4} \\\\
-    \\end{tabular*}\\vspace{-3pt}
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-1.5pt}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-3pt}
 }
 
-\\newcommand{\\resumeProjectHeading}[2]{
-    \\vspace{-1.5pt}\\item
-    \\begin{tabular*}{0.98\\textwidth}{l@{\\extracolsep{\\fill}}r}
-      \\small#1 & #2 \\\\
-    \\end{tabular*}\\vspace{-3pt}
+\newcommand{\resumeProjectHeading}[2]{
+    \vspace{-1.5pt}\item
+    \begin{tabular*}{0.98\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-3pt}
 }
 
-\\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
-\\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}\\vspace{-1pt}}
-\\newcommand{\\resumeItemListStart}{\\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
-\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-2pt}}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, itemsep=1.5pt, topsep=1pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{-1pt}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.18in, itemsep=-0.5pt, topsep=1pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
 
-\\begin{document}
+\begin{document}
 
 %----------HEADING----------
-\\begin{center}
-    \\textbf{\\Huge \\scshape Arjun Mehta} \\\\ \\vspace{2pt}
-    \\small +91 9876543210 $|$
-    \\link{mailto:arjun.mehta.dev@example.com}{arjun.mehta.dev@example.com} $|$
-    \\link{https://www.linkedin.com/in/arjun-mehta-dev/}{LinkedIn} $|$
-    \\link{https://github.com/arjunmehta-dev}{GitHub} $|$
-    \\link{https://arjunmehta.dev/}{Portfolio}
-\\end{center}
-\\vspace{-4pt}
+\begin{center}
+    \textbf{\Huge \scshape Arjun Mehta} \\ \vspace{2pt}
+    \small +91 9876543210 $|$
+    \link{mailto:arjun.mehta.dev@example.com}{arjun.mehta.dev@example.com} $|$
+    \link{https://www.linkedin.com/in/arjun-mehta-dev/}{LinkedIn} $|$
+    \link{https://github.com/arjunmehta-dev}{GitHub} $|$
+    \link{https://arjunmehta.dev/}{Portfolio}
+\end{center}
+\vspace{-4pt}
 
 %-----------EDUCATION-----------
-\\section{Education}
-  \\resumeSubHeadingListStart
-    \\resumeSubheading
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
       {Western Institute of Technology, Ahmedabad-Gujarat, }{CGPA: 8.6/10}
-      {B.Tech. in Computer Science \\& Engineering}{July 2023 -- May 2027}
-    \\resumeSubheading
+      {B.Tech. in Computer Science \& Engineering}{July 2023 -- May 2027}
+    \resumeSubheading
       {Silver Oak Science Academy, Surat-Gujarat}{98.72 percentile}
       {12th Board, GSEB}{May 2022 -- Mar 2023}
-    \\resumeSubheading
+    \resumeSubheading
       {Green Valley High School, Surat-Gujarat}{97.84 percentile}
       {10th Board, GSEB}{June 2020 -- Apr 2021}
-  \\resumeSubHeadingListEnd
+  \resumeSubHeadingListEnd
 
-%-----------TECHNICAL SKILLS \\& COURSEWORK-----------
-\\section{Technical Skills \\& Coursework}
- \\begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
-    \\small{\\item{
-     \\textbf{Languages:}\\hspace{0.5em} C++, C, Python, JavaScript, TypeScript, SQL \\\\[1.5pt]
-     \\textbf{Core Technologies:}\\hspace{0.5em} HTML, CSS, Node.js, React.js, Next.js, REST APIs, FastAPI \\\\[1.5pt]
-     \\textbf{Databases:}\\hspace{0.5em} PostgreSQL, MySQL, MongoDB, Redis \\\\[1.5pt]
-     \\textbf{Tools \\& DevOps:}\\hspace{0.5em} GitHub, VS Code, Docker, Postman, GitHub Actions \\\\[1.5pt]
-     \\textbf{Concepts:}\\hspace{0.5em} Data Structures \\& Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Computer Architecture, System Design, Microservices \\\\[1.5pt]
-     \\textbf{Coursework:}\\hspace{0.5em} Full Stack Web Development, Artificial Intelligence \\& Machine Learning, Cloud Computing
+%-----------TECHNICAL SKILLS \& COURSEWORK-----------
+\section{Technical Skills \& Coursework}
+ \begin{itemize}[leftmargin=0.15in, label={}, topsep=1pt, itemsep=1pt]
+    \small{\item{
+     \textbf{Languages:}\hspace{0.5em} C++, C, Python, JavaScript, TypeScript, SQL \\[1.5pt]
+     \textbf{Core Technologies:}\hspace{0.5em} HTML, CSS, Node.js, React.js, Next.js, REST APIs, FastAPI \\[1.5pt]
+     \textbf{Databases:}\hspace{0.5em} PostgreSQL, MySQL, MongoDB, Redis \\[1.5pt]
+     \textbf{Tools \& DevOps:}\hspace{0.5em} GitHub, VS Code, Docker, Postman, GitHub Actions \\[1.5pt]
+     \textbf{Concepts:}\hspace{0.5em} Data Structures \& Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Computer Architecture, System Design, Microservices \\[1.5pt]
+     \textbf{Coursework:}\hspace{0.5em} Full Stack Web Development, Distributed Systems, Cloud Architecture
     }}
- \\end{itemize}
- \\vspace{-2pt}
+ \end{itemize}
+ \vspace{-2pt}
 
 %-----------EXPERIENCE-----------
-\\section{Experience}
-  \\resumeSubHeadingListStart
+\section{Experience}
+  \resumeSubHeadingListStart
 
-    \\resumeSubheading
+    \resumeSubheading
       {NovaStack Technologies}{Vadodara, Gujarat}
-      {Software Engineer Intern $|$ React, FastAPI, PostgreSQL, OpenAI API}{May 2026 -- Jul 2026}
-      \\resumeItemListStart
-        \\resumeItem{Developed \\textbf{REST APIs} and secured application services using \\textbf{JWT} and \\textbf{RBAC} for an AI-assisted project management platform.}
-        \\resumeItem{Designed a version control module using \\textbf{SQLAlchemy} and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.}
-      \\resumeItemListEnd
+      {Software Engineer Intern $|$ React, FastAPI, PostgreSQL, Redis}{May 2026 -- Jul 2026}
+      \resumeItemListStart
+        \resumeItem{Developed \textbf{REST APIs} and secured application services using \textbf{JWT} and \textbf{RBAC} for a collaborative project management platform.}
+        \resumeItem{Designed a version control module using \textbf{SQLAlchemy} and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.}
+      \resumeItemListEnd
 
-  \\resumeSubHeadingListEnd
+  \resumeSubHeadingListEnd
+
+%-----------CODING PROFILES-----------
+\section{Coding Profiles}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\link{https://leetcode.com/u/arjun_mehta_dev/}{\textbf{LeetCode:}} Solved 275+ algorithmic problems}      
+      {\link{https://codeforces.com/profile/arjun_mehta01}{\textbf{Codeforces:}} Solved 180+ problems}
+  \resumeSubHeadingListEnd
 
 %-----------PROJECTS-----------
-\\section{Projects}
-    \\resumeSubHeadingListStart
+\section{Projects}
+    \resumeSubHeadingListStart
 
-      \\resumeProjectHeading
-          {\\textbf{StudySphere - AI Learning Platform} $|$ \\emph{FastAPI, React, PostgreSQL, OpenAI API}}{\\link{https://github.com/arjunmehta-dev/studysphere}{GitHub}}
-          \\resumeItemListStart
-            \\resumeItem{Built a \\textbf{RAG}-powered learning platform featuring context-aware study assistance, automated quizzes, and a \\textbf{Monaco Editor}-based coding workspace protected using \\textbf{JWT} and \\textbf{RBAC}.}
-            \\resumeItem{Implemented a Git-inspired document versioning system using \\textbf{SQLAlchemy} and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.}
-          \\resumeItemListEnd
+      \resumeProjectHeading
+          {\textbf{StudySphere - Collaborative Learning Platform} $|$ \emph{FastAPI, React, PostgreSQL, Docker}}{\link{https://github.com/arjunmehta-dev/studysphere}{GitHub}}
+          \resumeItemListStart
+            \resumeItem{Built a full-stack learning platform featuring structured study modules, automated testing, and a \textbf{Monaco Editor}-based coding workspace protected using \textbf{JWT} and \textbf{RBAC}.}
+            \resumeItem{Implemented a Git-inspired document versioning system using \textbf{SQLAlchemy} and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.}
+          \resumeItemListEnd
 
-      \\resumeProjectHeading
-          {\\textbf{SecureTrack - Security Awareness Platform} $|$ \\emph{MERN, Tailwind, Nodemailer, JWT}}{\\link{https://github.com/arjunmehta-dev/securetrack}{GitHub}}
-          \\resumeItemListStart
-            \\resumeItem{Developed a full-stack \\textbf{security awareness} platform for controlled phishing simulations and employee interaction analytics, including email opens, link clicks, and incident reporting.}
-            \\resumeItem{Implemented \\textbf{role-based access}, bulk user onboarding, and dynamic risk dashboards with \\textbf{AI-assisted} explanations and gamified security scores.}
-          \\resumeItemListEnd
+      \resumeProjectHeading
+          {\textbf{SecureTrack - Security Awareness Platform} $|$ \emph{MERN, Tailwind, Nodemailer, JWT}}{\link{https://github.com/arjunmehta-dev/securetrack}{GitHub}}
+          \resumeItemListStart
+            \resumeItem{Developed a full-stack \textbf{security awareness} platform for controlled simulations and employee interaction analytics, including email telemetry, interaction tracking, and reporting.}
+            \resumeItem{Implemented \textbf{role-based access}, bulk user onboarding, and dynamic risk dashboards with analytics visualizations and gamified security scores.}
+          \resumeItemListEnd
 
-    \\resumeSubHeadingListEnd
+    \resumeSubHeadingListEnd
 
 %-----------ACHIEVEMENTS-----------
-\\section{Achievements}
-    \\resumeItemListStart
-      \\resumeItem{\\textbf{Winner} of National Student Innovation Challenge 2026 -- FinTech Automation Track \\link{https://example.com/certificates/fintech-2026}{[Certificate]}}
-      \\resumeItem{\\textbf{Top 10} in CodeSprint Hackathon 2026 -- Smart Campus Assistant \\link{https://example.com/certificates/codesprint-2026}{[Certificate]}}
-      \\resumeItem{\\textbf{Finalist} in BuildForTomorrow Hackathon -- Environmental Monitoring Platform \\link{https://example.com/certificates/buildfortomorrow-2026}{[Certificate]}}
-    \\resumeItemListEnd
+\section{Achievements}
+    \resumeItemListStart
+      \resumeItem{\textbf{Winner} of National Student Innovation Challenge 2026 -- FinTech Automation Track \link{https://example.com/certificates/fintech-2026}{[Certificate]}}
+      \resumeItem{\textbf{Top 10} in CodeSprint Hackathon 2026 -- Smart Campus Assistant \link{https://example.com/certificates/codesprint-2026}{[Certificate]}}
+      \resumeItem{\textbf{Finalist} in BuildForTomorrow Hackathon -- Environmental Monitoring Platform \link{https://example.com/certificates/buildfortomorrow-2026}{[Certificate]}}
+    \resumeItemListEnd
 
-\\end{document}`;
+\end{document}`;
 
 export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
   personal: {
@@ -340,7 +359,7 @@ export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
   },
   education: [
     {
-      institution: 'Western Institute of Technology, Ahmedabad-Gujarat',
+      institution: 'Western Institute of Technology, Ahmedabad-Gujarat, ',
       degree: 'B.Tech.',
       field: 'Computer Science & Engineering',
       gpa: 'CGPA: 8.6/10',
@@ -372,31 +391,43 @@ export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
     { category: 'Core Technologies', skills: 'HTML, CSS, Node.js, React.js, Next.js, REST APIs, FastAPI' },
     { category: 'Databases', skills: 'PostgreSQL, MySQL, MongoDB, Redis' },
     { category: 'Tools & DevOps', skills: 'GitHub, VS Code, Docker, Postman, GitHub Actions' },
-    { category: 'Concepts', skills: 'Data Structures & Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Microservices' },
-    { category: 'Coursework', skills: 'Full Stack Web Development, Artificial Intelligence & Machine Learning, Cloud Computing' },
+    { category: 'Concepts', skills: 'Data Structures & Algorithms, OOP, DBMS, Operating Systems, Computer Networks, Computer Architecture, System Design, Microservices' },
+    { category: 'Coursework', skills: 'Full Stack Web Development, Distributed Systems, Cloud Architecture' },
   ],
   experience: [
     {
       company: 'NovaStack Technologies',
       role: 'Software Engineer Intern',
       location: 'Vadodara, Gujarat',
-      technologies: 'React, FastAPI, PostgreSQL, OpenAI API',
+      technologies: 'React, FastAPI, PostgreSQL, Redis',
       start_date: 'May 2026',
       end_date: 'Jul 2026',
       current: false,
       bullets: [
-        'Developed REST APIs and secured application services using JWT and RBAC for an AI-assisted project management platform.',
+        'Developed REST APIs and secured application services using JWT and RBAC for a collaborative project management platform.',
         'Designed a version control module using SQLAlchemy and graph-based algorithms to support document branching, line-by-line diffs, and 3-way merge conflict resolution.',
       ],
     },
   ],
+  coding_profiles: [
+    {
+      platform: 'LeetCode',
+      url: 'https://leetcode.com/u/arjun_mehta_dev/',
+      description: 'Solved 275+ algorithmic problems',
+    },
+    {
+      platform: 'Codeforces',
+      url: 'https://codeforces.com/profile/arjun_mehta01',
+      description: 'Solved 180+ problems',
+    },
+  ],
   projects: [
     {
-      name: 'StudySphere - AI Learning Platform',
-      technologies: 'FastAPI, React, PostgreSQL, OpenAI API',
+      name: 'StudySphere - Collaborative Learning Platform',
+      technologies: 'FastAPI, React, PostgreSQL, Docker',
       github: 'https://github.com/arjunmehta-dev/studysphere',
       bullets: [
-        'Built a RAG-powered learning platform featuring context-aware study assistance, automated quizzes, and a Monaco Editor-based coding workspace protected using JWT and RBAC.',
+        'Built a full-stack learning platform featuring structured study modules, automated testing, and a Monaco Editor-based coding workspace protected using JWT and RBAC.',
         'Implemented a Git-inspired document versioning system using SQLAlchemy and graph traversal techniques for branching, line-by-line diffs, and 3-way merge conflict resolution.',
       ],
     },
@@ -405,8 +436,8 @@ export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
       technologies: 'MERN, Tailwind, Nodemailer, JWT',
       github: 'https://github.com/arjunmehta-dev/securetrack',
       bullets: [
-        'Developed a full-stack security awareness platform for controlled phishing simulations and employee interaction analytics, including email opens, link clicks, and incident reporting.',
-        'Implemented role-based access, bulk user onboarding, and dynamic risk dashboards with AI-assisted explanations and gamified security scores.',
+        'Developed a full-stack security awareness platform for controlled simulations and employee interaction analytics, including email telemetry, interaction tracking, and reporting.',
+        'Implemented role-based access, bulk user onboarding, and dynamic risk dashboards with analytics visualizations and gamified security scores.',
       ],
     },
   ],
@@ -433,8 +464,8 @@ export const SAMPLE_RESUME_FORM_DATA: ResumeFormData = {
 export const INITIAL_TEMPLATES: Template[] = [
   {
     id: '11111111-1111-1111-1111-111111111111',
-    title: 'ATS Software Engineer Classic',
-    description: 'Clean single-page ATS-optimized engineering resume with balanced section dividers, hyperlinks, education table, tech skills grid, experience, projects, and achievements.',
+    title: 'ATS Single-Page Engineer Master',
+    description: 'Clean single-page ATS-optimized engineering resume with balanced section dividers, hyperlinks, education table, tech skills grid, experience, coding profiles, projects, and achievements.',
     category: 'Software Engineering',
     thumbnail_url: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80',
     tex_template: MASTER_LATEX_TEMPLATE,
@@ -445,6 +476,7 @@ export const INITIAL_TEMPLATES: Template[] = [
         education: true,
         skills: true,
         experience: true,
+        coding_profiles: true,
         projects: true,
         certifications: false,
         achievements: true,

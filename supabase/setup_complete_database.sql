@@ -37,6 +37,16 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Backfill existing auth.users into public.profiles
+INSERT INTO public.profiles (id, email, full_name, role)
+SELECT 
+  id,
+  email,
+  COALESCE(raw_user_meta_data->>'full_name', split_part(email, '@', 1)),
+  'USER'
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
 -- 2. Templates Table
 CREATE TABLE IF NOT EXISTS public.templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -287,8 +297,8 @@ INSERT INTO public.templates (
   \\resumeSubHeadingListStart
 {{#each education}}
     \\resumeSubheading
-      {{{institution}}}{{{#if gpa}}{{gpa}}{{else}}{{location}}{{/if}}}
-      {{{degree}}}{{#if field}} in {{field}}{{/if}}{{{start_date}} -- {{end_date}}}
+      {{{institution}}}{{{gpa}}}
+      { {{degree}}{{#if field}} in {{field}}{{/if}} }{{{start_date}} -- {{end_date}}}
 {{/each}}
   \\resumeSubHeadingListEnd
 {{/if}}
@@ -313,7 +323,7 @@ INSERT INTO public.templates (
 {{#each experience}}
     \\resumeSubheading
       {{{company}}}{{{location}}}
-      {{{role}}}{{#if technologies}} $|$ {{technologies}}{{/if}}{{{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}}}
+      { {{role}}{{#if technologies}} $|$ {{technologies}}{{/if}} }{{{start_date}} -- {{#if current}}Present{{else}}{{end_date}}{{/if}}}
       {{#if bullets}}
       \\resumeItemListStart
       {{#each bullets}}
@@ -325,13 +335,24 @@ INSERT INTO public.templates (
   \\resumeSubHeadingListEnd
 {{/if}}
 
+{{#if coding_profiles}}
+%-----------CODING PROFILES-----------
+\\section{Coding Profiles}
+  \\resumeSubHeadingListStart
+{{#each coding_profiles}}
+    \\resumeProjectHeading
+      { \\link{{{url}}}{\\textbf{{{platform}}:}} {{description}} }{}
+{{/each}}
+  \\resumeSubHeadingListEnd
+{{/if}}
+
 {{#if projects}}
 %-----------PROJECTS-----------
 \\section{Projects}
     \\resumeSubHeadingListStart
 {{#each projects}}
       \\resumeProjectHeading
-          {\\textbf{{{name}}}}{{#if technologies}} $|$ \\emph{{{technologies}}}{{/if}}{{#if github}}{\\link{{{github}}}{GitHub}}{{else}}{{#if live_url}}{\\link{{{live_url}}}{Demo}}{{/if}}{{/if}}
+          { \\textbf{{{name}}}{{#if technologies}} $|$ \\emph{{{technologies}}}{{/if}} }{ {{#if github}}\\link{{{github}}}{GitHub}{{else}}{{#if live_url}}\\link{{{live_url}}}{Demo}{{/if}}{{/if}} }
           {{#if bullets}}
           \\resumeItemListStart
           {{#each bullets}}
@@ -348,13 +369,13 @@ INSERT INTO public.templates (
 \\section{Achievements}
     \\resumeItemListStart
     {{#each achievements}}
-      \\resumeItem{\\textbf{{{title}}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\\link{{{url}}}{[Certificate]}{{/if}}}
+      \\resumeItem{ \\textbf{{{title}}}{{#if description}} -- {{description}}{{/if}} {{#if url}}\\link{{{url}}}{[Certificate]}{{/if}} }
     {{/each}}
     \\resumeItemListEnd
 {{/if}}
 
 \\end{document}',
-  '{"sections": {"personal": true, "summary": false, "education": true, "experience": true, "projects": true, "skills": true, "certifications": false, "achievements": true}}'::jsonb,
+  '{"sections": {"personal": true, "summary": false, "education": true, "skills": true, "experience": true, "coding_profiles": true, "projects": true, "certifications": false, "achievements": true}}'::jsonb,
   1,
   true
 );

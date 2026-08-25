@@ -8,7 +8,7 @@ export default async function MakerWithIdPage({
 }) {
   const { id } = await params;
   return (
-    <DashboardLayout>
+    <DashboardLayout noPadding>
       <MakerView />
     </DashboardLayout>
   );

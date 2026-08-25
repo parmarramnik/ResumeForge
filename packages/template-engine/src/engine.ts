@@ -1,4 +1,4 @@
-import { latexEscape } from './escape';
+import { latexEscape } from './escape.ts';
 
 type TemplateContext = Record<string, unknown>;
 

@@ -3,7 +3,7 @@ import { GeneratorView } from '@/components/generator/generator-view';
 
 export default function GeneratorPage() {
   return (
-    <DashboardLayout>
+    <DashboardLayout noPadding>
       <GeneratorView />
     </DashboardLayout>
   );

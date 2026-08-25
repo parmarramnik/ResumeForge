@@ -1,5 +1,5 @@
 -- =========================================================================
--- ResumeForge Seed Data (Single Master ATS Template)
+-- ResumeForge Seed Data (Single Master ATS Template with Coding Profiles)
 -- =========================================================================
 
 DELETE FROM public.templates;
@@ -17,7 +17,7 @@ INSERT INTO public.templates (
 ) VALUES (
   '11111111-1111-1111-1111-111111111111',
   'ATS Software Engineer Classic',
-  'Clean single-page ATS-optimized engineering resume with balanced section dividers, hyperlinks, education table, tech skills grid, experience, projects, and achievements.',
+  'Clean single-page ATS-optimized engineering resume with balanced section dividers, hyperlinks, education table, tech skills grid, experience, coding profiles, projects, and achievements.',
   'Software Engineering',
   'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80',
   E'\\documentclass[letterpaper,10pt]{article}
@@ -112,7 +112,7 @@ INSERT INTO public.templates (
   \\resumeSubHeadingListStart
 {{#each education}}
     \\resumeSubheading
-      {{{institution}}}{{{#if gpa}}{{gpa}}{{else}}{{location}}{{/if}}}
+      {{{institution}}}{{{gpa}}}
       {{{degree}}}{{#if field}} in {{field}}{{/if}}{{{start_date}} -- {{end_date}}}
 {{/each}}
   \\resumeSubHeadingListEnd
@@ -150,6 +150,17 @@ INSERT INTO public.templates (
   \\resumeSubHeadingListEnd
 {{/if}}
 
+{{#if coding_profiles}}
+%-----------CODING PROFILES-----------
+\\section{Coding Profiles}
+  \\resumeSubHeadingListStart
+{{#each coding_profiles}}
+    \\resumeProjectHeading
+      {\\link{{{url}}}{\\textbf{{{platform}}:}} {{description}}}{}
+{{/each}}
+  \\resumeSubHeadingListEnd
+{{/if}}
+
 {{#if projects}}
 %-----------PROJECTS-----------
 \\section{Projects}
@@ -179,7 +190,7 @@ INSERT INTO public.templates (
 {{/if}}
 
 \\end{document}',
-  '{"sections": {"personal": true, "summary": false, "education": true, "experience": true, "projects": true, "skills": true, "certifications": false, "achievements": true}}'::jsonb,
+  '{"sections": {"personal": true, "summary": false, "education": true, "skills": true, "experience": true, "coding_profiles": true, "projects": true, "certifications": false, "achievements": true}}'::jsonb,
   1,
   true
 );

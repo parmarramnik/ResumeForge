@@ -1,6 +1,6 @@
 import base64
 import os
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from .models import CompileRequest, CompileErrorResponse, HealthResponse
 from .validators import validate_latex_safety
@@ -25,7 +25,7 @@ app.add_middleware(
 @app.get("/health", response_model=HealthResponse)
 def health_check():
     engines = detect_available_engines()
-    active_engine = "tectonic" if engines["tectonic"] else ("pdflatex" if engines["pdflatex"] else "none")
+    active_engine = "pdflatex" if engines["pdflatex"] else ("tectonic" if engines["tectonic"] else "none")
     return HealthResponse(
         status="healthy" if active_engine != "none" else "degraded (no engine)",
         engine=active_engine,
@@ -52,7 +52,7 @@ async def compile_endpoint(request: CompileRequest):
     # 2. Compile document in sandbox
     result = compile_latex_document(
         tex_source=request.tex,
-        engine=request.engine or "tectonic"
+        engine=request.engine or "pdflatex"
     )
 
     # 3. Handle compilation failure

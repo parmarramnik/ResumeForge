@@ -44,6 +44,14 @@ export const experienceItemSchema = z.object({
   bullets: z.array(z.string()).default([]),
 });
 
+export const codingProfileItemSchema = z.object({
+  id: z.string().optional(),
+  platform: z.string().min(1, 'Platform name is required'),
+  url: z.string().min(1, 'Profile URL is required'),
+  description: z.string().optional(),
+  solved_count: z.string().optional(),
+});
+
 export const projectItemSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Project name is required'),
@@ -80,9 +88,10 @@ export const resumeFormDataSchema = z.object({
   personal: personalInfoSchema,
   summary: z.string().optional(),
   education: z.array(educationItemSchema).default([]),
-  experience: z.array(experienceItemSchema).default([]),
-  projects: z.array(projectItemSchema).default([]),
   skills: z.array(skillCategorySchema).default([]),
+  experience: z.array(experienceItemSchema).default([]),
+  coding_profiles: z.array(codingProfileItemSchema).optional().default([]),
+  projects: z.array(projectItemSchema).default([]),
   certifications: z.array(certificationItemSchema).optional().default([]),
   achievements: z.array(achievementItemSchema).optional().default([]),
   custom_fields: z.record(z.unknown()).optional(),
@@ -126,6 +135,6 @@ export const updateResumeSchema = z.object({
 
 export const compileRequestSchema = z.object({
   tex: z.string().min(1, 'LaTeX content is required').max(2097152, 'Payload exceeds 2MB limit'),
-  engine: z.enum(['tectonic', 'pdflatex', 'xelatex', 'lualatex']).optional().default('tectonic'),
+  engine: z.enum(['pdflatex', 'tectonic', 'xelatex', 'lualatex']).optional().default('pdflatex'),
   return_base64: z.boolean().optional().default(false),
 });

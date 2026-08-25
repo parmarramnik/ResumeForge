@@ -8,7 +8,7 @@ export default async function GeneratorWithIdPage({
 }) {
   const { id } = await params;
   return (
-    <DashboardLayout>
+    <DashboardLayout noPadding>
       <GeneratorView />
     </DashboardLayout>
   );

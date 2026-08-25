@@ -8,8 +8,9 @@ node_modules/
 out/
 build/
 dist/
+*.tsbuildinfo
 
-# Python cache
+# Python cache & virtual environments
 __pycache__/
 *.py[cod]
 *$py.class

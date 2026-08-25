@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FileCode2, Lock, Mail, Loader2 } from 'lucide-react';
+import { FileCode2, Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,11 @@ export default function LoginPage() {
   });
 
   const { register, handleSubmit, formState: { errors } } = form;
+
+  const handleGuestAccess = () => {
+    document.cookie = 'resumeforge_guest=true; path=/; max-age=86400';
+    router.push('/dashboard');
+  };
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
@@ -86,8 +91,9 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-                  {errorMessage}
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{errorMessage}</span>
                 </div>
               )}
 
@@ -139,11 +145,22 @@ export default function LoginPage() {
             </CardContent>
           </form>
 
-          <CardFooter className="flex justify-center border-t border-border/50 pt-4 text-xs text-muted-foreground">
-            <span>Don&apos;t have an account?</span>
-            <Link href="/register" className="ml-1 font-semibold text-foreground hover:underline">
-              Create an account
-            </Link>
+          <CardFooter className="flex flex-col gap-2 border-t border-border/50 pt-4 text-xs text-muted-foreground">
+            <div className="flex justify-center">
+              <span>Don&apos;t have an account?</span>
+              <Link href="/register" className="ml-1 font-semibold text-foreground hover:underline">
+                Create an account
+              </Link>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleGuestAccess}
+              className="text-[11px] text-muted-foreground hover:text-foreground h-7"
+            >
+              Skip to Workspace (Guest Mode) →
+            </Button>
           </CardFooter>
         </Card>
       </div>

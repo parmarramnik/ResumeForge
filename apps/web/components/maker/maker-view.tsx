@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Play,
@@ -12,7 +12,9 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
+  GripVertical,
 } from 'lucide-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +35,7 @@ interface MonacoEditorComponentProps {
 // Dynamically import Monaco editor to avoid SSR issues
 const MonacoLatexEditor = dynamic<MonacoEditorComponentProps>(
   () => import('@/components/editor/monaco-latex-editor').then((mod) => mod.MonacoLatexEditor),
-  { ssr: false, loading: () => <div className="h-full bg-[#1e1e1e] flex items-center justify-center text-xs text-muted-foreground font-mono">Loading Monaco LaTeX Editor...</div> }
+  { ssr: false, loading: () => <div className="h-full bg-[#18181b] flex items-center justify-center text-xs text-muted-foreground font-mono">Loading Monaco LaTeX Editor...</div> }
 );
 
 interface MakerViewProps {
@@ -54,6 +56,9 @@ export function MakerView({ initialResume }: MakerViewProps) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const localBlobCacheRef = useRef<Map<string, Blob>>(new Map());
+
   // Check if opened from Generator
   useEffect(() => {
     const transferredTex = localStorage.getItem('resumeforge_maker_tex');
@@ -63,9 +68,28 @@ export function MakerView({ initialResume }: MakerViewProps) {
     }
   }, []);
 
-  // Compilation handler
+  // Compilation handler with AbortController & Instant Cache
   const handleCompile = useCallback(async () => {
-    if (isCompiling) return;
+    const currentCode = texContent;
+    if (!currentCode) return;
+
+    // Check instant client cache
+    const cachedBlob = localBlobCacheRef.current.get(currentCode);
+    if (cachedBlob) {
+      setPdfBlob(cachedBlob);
+      setErrorMessage(null);
+      setCompileErrors([]);
+      setIsErrorDrawerOpen(false);
+      return;
+    }
+
+    // Cancel any previous in-flight compilation request immediately
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsCompiling(true);
     setErrorMessage(null);
     setCompileErrors([]);
@@ -74,7 +98,8 @@ export function MakerView({ initialResume }: MakerViewProps) {
       const res = await fetch('/api/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tex: texContent, engine: 'tectonic' }),
+        body: JSON.stringify({ tex: currentCode, engine: 'pdflatex' }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -87,21 +112,31 @@ export function MakerView({ initialResume }: MakerViewProps) {
       }
 
       const blob = await res.blob();
+      localBlobCacheRef.current.set(currentCode, blob);
       setPdfBlob(blob);
       setErrorMessage(null);
       setCompileErrors([]);
       setIsErrorDrawerOpen(false);
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // Ignored: new request supersedes aborted one
+        return;
+      }
       setErrorMessage(err instanceof Error ? err.message : 'Network error compiling document');
       setIsErrorDrawerOpen(true);
     } finally {
       setIsCompiling(false);
     }
-  }, [texContent, isCompiling]);
+  }, [texContent]);
 
   // Initial compilation on mount
   useEffect(() => {
     handleCompile();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   // Save handler
@@ -147,18 +182,18 @@ export function MakerView({ initialResume }: MakerViewProps) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-background">
       {/* Top Action Toolbar */}
-      <div className="h-14 border-b border-border bg-card/60 px-6 flex items-center justify-between shrink-0">
+      <div className="h-14 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <FileCode className="w-4 h-4 text-primary" />
+          <FileCode className="w-4 h-4 text-foreground" />
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="h-8 w-72 text-xs font-semibold bg-transparent border-transparent hover:border-border focus:border-border px-2"
           />
-          <Badge variant="outline" className="text-[10px] uppercase font-mono text-muted-foreground">
-            Direct LaTeX IDE
+          <Badge variant="outline" className="text-[10px] uppercase font-mono text-muted-foreground border-border">
+            Code Editor
           </Badge>
         </div>
 
@@ -194,7 +229,7 @@ export function MakerView({ initialResume }: MakerViewProps) {
           >
             {saveStatus === 'saved' ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-foreground" />
                 <span>Saved!</span>
               </>
             ) : (
@@ -209,7 +244,7 @@ export function MakerView({ initialResume }: MakerViewProps) {
             size="sm"
             onClick={handleCompile}
             disabled={isCompiling}
-            className="h-8 text-xs gap-1.5 shadow-sm font-semibold bg-primary text-primary-foreground"
+            className="h-8 text-xs gap-1.5 shadow-sm font-semibold bg-foreground text-background hover:bg-foreground/90"
           >
             <Play className={`w-3.5 h-3.5 fill-current ${isCompiling ? 'animate-spin' : ''}`} />
             <span>{isCompiling ? 'Compiling...' : 'Compile (Ctrl+S)'}</span>
@@ -217,10 +252,10 @@ export function MakerView({ initialResume }: MakerViewProps) {
         </div>
       </div>
 
-      {/* Main Split-Pane Workspace */}
-      <div className="flex-1 flex overflow-hidden relative">
+      {/* Main Split-Pane Workspace with Overleaf-Style Draggable Resizer */}
+      <PanelGroup direction="horizontal" className="flex-1 overflow-hidden">
         {/* Left Pane: Monaco Code Editor */}
-        <div className="w-1/2 flex flex-col border-r border-border bg-[#1e1e1e]">
+        <Panel defaultSize={50} minSize={20} className="flex flex-col bg-[#141417] overflow-hidden">
           <div className="flex-1 overflow-hidden">
             <MonacoLatexEditor
               value={texContent}
@@ -233,13 +268,13 @@ export function MakerView({ initialResume }: MakerViewProps) {
 
           {/* Diagnostic Error Drawer */}
           {errorMessage && (
-            <div className="border-t border-destructive/30 bg-destructive/10 text-xs">
+            <div className="border-t border-border bg-card text-xs">
               <div
-                className="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-destructive/20 select-none"
+                className="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-muted select-none"
                 onClick={() => setIsErrorDrawerOpen(!isErrorDrawerOpen)}
               >
-                <div className="flex items-center gap-2 text-destructive font-medium">
-                  <AlertTriangle className="w-4 h-4" />
+                <div className="flex items-center gap-2 font-medium">
+                  <AlertTriangle className="w-4 h-4 text-foreground" />
                   <span>Compilation Diagnostic ({compileErrors.length} issues)</span>
                 </div>
                 {isErrorDrawerOpen ? (
@@ -251,16 +286,16 @@ export function MakerView({ initialResume }: MakerViewProps) {
 
               {isErrorDrawerOpen && (
                 <div className="px-4 pb-3 max-h-48 overflow-y-auto space-y-1.5 font-mono text-[11px]">
-                  <p className="text-destructive font-semibold">{errorMessage}</p>
+                  <p className="font-semibold text-foreground">{errorMessage}</p>
                   {compileErrors.map((err, idx) => (
                     <div
                       key={idx}
                       onClick={() => setHighlightLine(err.line ?? null)}
-                      className="p-1.5 rounded bg-background/50 border border-destructive/20 hover:border-destructive text-foreground cursor-pointer flex items-center justify-between"
+                      className="p-1.5 rounded bg-muted/40 border border-border hover:border-foreground/40 text-foreground cursor-pointer flex items-center justify-between"
                     >
                       <span>{err.message}</span>
                       {err.line && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-bold">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-foreground text-background font-bold">
                           Line {err.line}
                         </span>
                       )}
@@ -270,18 +305,25 @@ export function MakerView({ initialResume }: MakerViewProps) {
               )}
             </div>
           )}
-        </div>
+        </Panel>
+
+        {/* Overleaf-Style Drag Handle */}
+        <PanelResizeHandle className="w-2 relative bg-border/70 hover:bg-foreground/30 transition-colors cursor-col-resize flex items-center justify-center group z-20 select-none">
+          <div className="w-1 h-8 rounded-full bg-muted-foreground/40 group-hover:bg-foreground transition-colors flex items-center justify-center">
+            <GripVertical className="w-3 h-3 text-muted-foreground/70 group-hover:text-background transition-colors" />
+          </div>
+        </PanelResizeHandle>
 
         {/* Right Pane: High Performance PDF Viewer */}
-        <div className="w-1/2 flex flex-col bg-muted/30 overflow-hidden">
+        <Panel defaultSize={50} minSize={20} className="flex flex-col bg-muted/20 overflow-hidden">
           <ResumePdfViewer
             pdfBlob={pdfBlob}
             isLoading={isCompiling}
             errorMessage={errorMessage}
             onRetry={handleCompile}
           />
-        </div>
-      </div>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 }

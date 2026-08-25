@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FileCode2, Lock, Mail, User, Loader2, CheckCircle2 } from 'lucide-react';
+import { FileCode2, Lock, Mail, User, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isRateLimited, setIsRateLimited] = useState<boolean>(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -29,10 +30,16 @@ export default function RegisterPage() {
 
   const { register, handleSubmit, formState: { errors } } = form;
 
+  const handleGuestAccess = () => {
+    document.cookie = 'resumeforge_guest=true; path=/; max-age=86400';
+    router.push('/dashboard');
+  };
+
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
+    setIsRateLimited(false);
 
     try {
       const supabase = createClient();
@@ -48,7 +55,10 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        if (error.message.includes('User already registered')) {
+        if (error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit') || error.status === 429) {
+          setIsRateLimited(true);
+          setErrorMessage('Supabase auth signup rate limit reached. You can sign in with existing credentials or continue directly in Guest / Demo mode.');
+        } else if (error.message?.includes('User already registered')) {
           setErrorMessage('An account with this email already exists. Please sign in instead.');
         } else {
           setErrorMessage(error.message);
@@ -71,7 +81,13 @@ export default function RegisterPage() {
         }, 2000);
       }
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to register account. Please try again.');
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+        setIsRateLimited(true);
+        setErrorMessage('Auth service rate limit reached. Please sign in or use Demo / Guest mode.');
+      } else {
+        setErrorMessage(msg || 'Failed to register account. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -102,8 +118,23 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-                  {errorMessage}
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{errorMessage}</span>
+                  </div>
+                  {isRateLimited && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGuestAccess}
+                      className="w-full h-7 text-xs font-semibold gap-1 bg-background text-foreground hover:bg-muted"
+                    >
+                      <span>Continue with Demo / Guest Mode</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -187,11 +218,22 @@ export default function RegisterPage() {
             </CardContent>
           </form>
 
-          <CardFooter className="flex justify-center border-t border-border/50 pt-4 text-xs text-muted-foreground">
-            <span>Already have an account?</span>
-            <Link href="/login" className="ml-1 font-semibold text-foreground hover:underline">
-              Sign in
-            </Link>
+          <CardFooter className="flex flex-col gap-2 border-t border-border/50 pt-4 text-xs text-muted-foreground">
+            <div className="flex justify-center">
+              <span>Already have an account?</span>
+              <Link href="/login" className="ml-1 font-semibold text-foreground hover:underline">
+                Sign in
+              </Link>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleGuestAccess}
+              className="text-[11px] text-muted-foreground hover:text-foreground h-7"
+            >
+              Skip to Workspace (Guest Mode) →
+            </Button>
           </CardFooter>
         </Card>
       </div>

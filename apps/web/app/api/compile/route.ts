@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { compileRequestSchema } from '@resumeforge/validation';
 import { checkRateLimit } from '@/lib/security/rate-limiter';
-import { generateSimplePdfFromTex } from '@/lib/latex/simple-pdf-generator';
+import crypto from 'crypto';
 
 const COMPILER_URL = process.env.COMPILER_SERVICE_URL || 'http://localhost:8000';
 
+// High-speed in-memory compilation cache (up to 100 recent documents)
+const pdfCache = new Map<string, { buffer: ArrayBuffer; duration: string; engine: string }>();
+
 export async function POST(req: NextRequest) {
   try {
-    // 1. Rate Limiting per IP / User
+    // 1. Rate Limiting per IP
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-    const rateLimit = checkRateLimit(ip, 60, 60 * 1000); // 60 compiles per minute
+    const rateLimit = checkRateLimit(ip, 120, 60 * 1000); // 120 compiles per minute for fast interactive editing
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -41,11 +44,30 @@ export async function POST(req: NextRequest) {
     }
 
     const { tex, engine } = parseResult.data;
+    const requestedEngine = engine || 'pdflatex';
 
-    // 3. Attempt Proxy to Isolated Compiler Service
+    // 3. Check High-Speed In-Memory Cache (0ms Instant Hit)
+    const cacheKey = crypto.createHash('sha256').update(`${requestedEngine}:${tex}`).digest('hex');
+    const cached = pdfCache.get(cacheKey);
+
+    if (cached) {
+      return new NextResponse(cached.buffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'inline; filename=resume.pdf',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'X-Duration-Ms': '0',
+          'X-Compiler-Engine': cached.engine,
+          'X-Cache-Hit': 'true',
+        },
+      });
+    }
+
+    // 4. Proxy to Isolated LaTeX Compiler Microservice
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const compilerRes = await fetch(`${COMPILER_URL}/compile`, {
         method: 'POST',
@@ -54,7 +76,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           tex,
-          engine: engine || 'tectonic',
+          engine: requestedEngine,
           return_base64: false,
         }),
         signal: controller.signal,
@@ -64,57 +86,48 @@ export async function POST(req: NextRequest) {
 
       if (compilerRes.ok) {
         const pdfArrayBuffer = await compilerRes.arrayBuffer();
+        const duration = compilerRes.headers.get('x-duration-ms') || '0';
+        const usedEngine = compilerRes.headers.get('x-compiler-engine') || requestedEngine;
+
+        // Store in cache (evict oldest if cache exceeds 100 items)
+        if (pdfCache.size >= 100) {
+          const firstKey = pdfCache.keys().next().value;
+          if (firstKey) pdfCache.delete(firstKey);
+        }
+        pdfCache.set(cacheKey, { buffer: pdfArrayBuffer, duration, engine: usedEngine });
+
         return new NextResponse(pdfArrayBuffer, {
           status: 200,
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': 'inline; filename=resume.pdf',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'X-Compiler-Engine': 'tectonic-sandbox',
+            'X-Duration-Ms': duration,
+            'X-Compiler-Engine': usedEngine,
           },
         });
       }
 
-      if (compilerRes.status === 422 || compilerRes.status === 400) {
-        const errJson = await compilerRes.json().catch(() => ({}));
-        if (errJson.error && errJson.error.includes('No native TeX compiler')) {
-          // Native compiler not found -> fall through to built-in vector PDF engine
-        } else {
-          return NextResponse.json(
-            {
-              success: false,
-              error: errJson.error || 'LaTeX compilation failed.',
-              line: errJson.line,
-              errors: errJson.errors || [],
-            },
-            { status: 422 }
-          );
-        }
-      }
-    } catch {
-      // External compiler container is offline or starting -> Seamlessly use built-in vector PDF engine
-    }
-
-    // 4. Built-in High-Speed Vector PDF Rendering Engine
-    try {
-      const pdfBytes = generateSimplePdfFromTex(tex);
-      return new NextResponse(Buffer.from(pdfBytes), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': 'inline; filename=resume.pdf',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'X-Compiler-Engine': 'vector-latex-renderer',
-        },
-      });
-    } catch (fallbackErr: unknown) {
+      // Handle LaTeX syntax error response
+      const errJson = await compilerRes.json().catch(() => ({}));
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to render PDF document.',
-          detail: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+          error: errJson.error || 'LaTeX compilation failed.',
+          line: errJson.line,
+          errors: errJson.errors || [],
+          raw_log: errJson.raw_log,
         },
-        { status: 500 }
+        { status: compilerRes.status || 422 }
+      );
+    } catch (fetchErr: unknown) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'LaTeX Compiler microservice is unreachable. Please make sure the compiler container is running on port 8000.',
+          detail: fetchErr instanceof Error ? fetchErr.message : String(fetchErr),
+        },
+        { status: 503 }
       );
     }
   } catch (err: unknown) {

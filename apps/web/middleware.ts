@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/compile') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
@@ -22,25 +23,36 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
+  const isGuest = request.cookies.get('resumeforge_guest')?.value === 'true';
 
-  // Check user session
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+
+  // Only create Supabase client if valid credentials exist
+  if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder')) {
+    try {
+      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+            response = NextResponse.next({
+              request,
+            });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            );
+          },
+        },
+      });
+
+      const { data } = await supabase.auth.getUser();
+      user = data.user;
+    } catch {
+      // Fallback gracefully on network error or offline mode
+    }
+  }
 
   const isAuthRoute =
     pathname.startsWith('/login') ||
@@ -56,8 +68,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/profile') ||
     pathname.startsWith('/settings');
 
-  // Strictly protect routes
-  if (!user && isProtectedRoute) {
+  // Protect routes unless logged in or in guest mode
+  if (!user && !isGuest && isProtectedRoute) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(redirectUrl);

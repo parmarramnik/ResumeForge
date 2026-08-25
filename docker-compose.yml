@@ -12,23 +12,33 @@ services:
       - "8000:8000"
     environment:
       - ENV=production
-      - COMPILER_TIMEOUT=8
+      - COMPILER_TIMEOUT=${COMPILER_TIMEOUT:-12}
       - MAX_INPUT_BYTES=2097152
     deploy:
       resources:
         limits:
           cpus: '2.0'
-          memory: 512M
+          memory: 1024M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     security_opt:
       - no-new-privileges:true
     networks:
       - resumeforge-net
 
-  # Next.js BFF and Web Application
+  # Next.js Web Application
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     container_name: resumeforge-web
     restart: unless-stopped
     ports:
@@ -36,11 +46,12 @@ services:
     environment:
       - NODE_ENV=production
       - COMPILER_SERVICE_URL=http://compiler:8000
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://placeholder.supabase.co}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-placeholder-anon-key}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-placeholder-service-role-key}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
     depends_on:
-      - compiler
+      compiler:
+        condition: service_healthy
     networks:
       - resumeforge-net
 

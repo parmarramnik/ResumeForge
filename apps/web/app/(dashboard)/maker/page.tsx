@@ -3,7 +3,7 @@ import { MakerView } from '@/components/maker/maker-view';
 
 export default function MakerPage() {
   return (
-    <DashboardLayout>
+    <DashboardLayout noPadding>
       <MakerView />
     </DashboardLayout>
   );

@@ -63,6 +63,14 @@ export interface SkillCategory {
   skills: string;
 }
 
+export interface CodingProfileItem {
+  id?: string;
+  platform: string;
+  url: string;
+  description?: string;
+  solved_count?: string;
+}
+
 export interface CertificationItem {
   id?: string;
   name: string;
@@ -83,9 +91,10 @@ export interface ResumeFormData {
   personal: PersonalInfo;
   summary?: string;
   education: EducationItem[];
-  experience: ExperienceItem[];
-  projects: ProjectItem[];
   skills: SkillCategory[];
+  experience: ExperienceItem[];
+  coding_profiles?: CodingProfileItem[];
+  projects: ProjectItem[];
   certifications?: CertificationItem[];
   achievements?: AchievementItem[];
   custom_fields?: Record<string, unknown>;
