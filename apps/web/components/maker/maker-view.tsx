@@ -43,11 +43,13 @@ const MonacoLatexEditor = dynamic<MonacoEditorComponentProps>(
 );
 
 interface MakerViewProps {
+  resumeId?: string;
   initialResume?: Resume | null;
 }
 
-export function MakerView({ initialResume }: MakerViewProps) {
+export function MakerView({ resumeId, initialResume }: MakerViewProps) {
   const { theme } = useTheme();
+  const [activeResumeId, setActiveResumeId] = useState<string | undefined>(resumeId || initialResume?.id);
   const [title, setTitle] = useState<string>(initialResume?.title || 'Professional Resume — Draft');
   const [texContent, setTexContent] = useState<string>(
     initialResume?.raw_tex || INITIAL_RAW_TEX
@@ -85,14 +87,42 @@ export function MakerView({ initialResume }: MakerViewProps) {
     });
   };
 
-  // Check if opened from Generator
+  // Load exact resume by ID or from local storage drafts
   useEffect(() => {
-    const transferredTex = localStorage.getItem('resumeforge_maker_tex');
-    if (transferredTex) {
-      setTexContent(transferredTex);
-      localStorage.removeItem('resumeforge_maker_tex');
+    if (resumeId) {
+      setActiveResumeId(resumeId);
+      // 1. Check if local draft exists for this specific resume ID
+      const localDraft = localStorage.getItem(`resumeforge_maker_resume_${resumeId}`);
+      if (localDraft) {
+        setTexContent(localDraft);
+      }
+
+      // 2. Fetch latest saved state from server
+      fetch(`/api/resumes/${resumeId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            if (data.data.title) setTitle(data.data.title);
+            if (data.data.raw_tex && !localDraft) {
+              setTexContent(data.data.raw_tex);
+            }
+          }
+        })
+        .catch(() => {});
+    } else {
+      // General maker without ID - check if transferred from Generator or saved draft
+      const transferredTex = localStorage.getItem('resumeforge_maker_tex');
+      if (transferredTex) {
+        setTexContent(transferredTex);
+        localStorage.removeItem('resumeforge_maker_tex');
+      } else {
+        const lastSavedTex = localStorage.getItem('resumeforge_maker_last_tex');
+        const lastSavedTitle = localStorage.getItem('resumeforge_maker_last_title');
+        if (lastSavedTex) setTexContent(lastSavedTex);
+        if (lastSavedTitle) setTitle(lastSavedTitle);
+      }
     }
-  }, []);
+  }, [resumeId]);
 
   // Compilation handler with AbortController & Instant Cache
   const handleCompile = useCallback(async () => {
@@ -166,18 +196,30 @@ export function MakerView({ initialResume }: MakerViewProps) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (initialResume?.id) {
-        await fetch(`/api/resumes/${initialResume.id}`, {
+      // Save locally
+      if (activeResumeId) {
+        localStorage.setItem(`resumeforge_maker_resume_${activeResumeId}`, texContent);
+      }
+      localStorage.setItem('resumeforge_maker_last_tex', texContent);
+      localStorage.setItem('resumeforge_maker_last_title', title);
+
+      // Save to server
+      if (activeResumeId) {
+        await fetch(`/api/resumes/${activeResumeId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, raw_tex: texContent }),
         });
       } else {
-        await fetch('/api/resumes', {
+        const res = await fetch('/api/resumes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, raw_tex: texContent, mode: 'latex' }),
+          body: JSON.stringify({ title, raw_tex: texContent, service_type: 'maker' }),
         });
+        const data = await res.json();
+        if (data.success && data.data?.id) {
+          setActiveResumeId(data.data.id);
+        }
       }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -218,9 +260,6 @@ export function MakerView({ initialResume }: MakerViewProps) {
               className="h-7 text-xs font-semibold w-52 md:w-64 bg-transparent border-transparent hover:border-border focus:border-border focus:bg-background px-2"
             />
           </div>
-          <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono border-border">
-            LATEX IDE
-          </Badge>
         </div>
 
         <div className="flex items-center gap-2">

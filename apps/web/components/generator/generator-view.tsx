@@ -28,10 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ResumePdfViewer } from '@/components/pdf/resume-pdf-viewer';
 import { resumeFormDataSchema } from '@resumeforge/validation';
-import { ResumeFormData, Template } from '@resumeforge/shared-types';
+import { ResumeFormData, Template, Resume } from '@resumeforge/shared-types';
 import { INITIAL_TEMPLATES, SAMPLE_RESUME_FORM_DATA, MASTER_LATEX_TEMPLATE } from '@/lib/supabase/mock-data';
 import { renderTemplate } from '@resumeforge/template-engine';
 
@@ -45,11 +44,17 @@ const WIZARD_STEPS = [
   { id: 'achievements', label: '7. Achievements', icon: Trophy },
 ];
 
-export function GeneratorView() {
+interface GeneratorViewProps {
+  resumeId?: string;
+  initialResume?: Resume | null;
+}
+
+export function GeneratorView({ resumeId, initialResume }: GeneratorViewProps) {
   const router = useRouter();
+  const [activeResumeId, setActiveResumeId] = useState<string | undefined>(resumeId || initialResume?.id);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [templates] = useState<Template[]>(INITIAL_TEMPLATES);
-  const [resumeTitle, setResumeTitle] = useState<string>('Professional Resume — Draft');
+  const [resumeTitle, setResumeTitle] = useState<string>(initialResume?.title || 'Professional Resume — Draft');
   const [generatedTex, setGeneratedTex] = useState<string>('');
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
@@ -63,11 +68,11 @@ export function GeneratorView() {
   // React Hook Form initialization
   const form = useForm<ResumeFormData>({
     resolver: zodResolver(resumeFormDataSchema),
-    defaultValues: SAMPLE_RESUME_FORM_DATA,
+    defaultValues: (initialResume?.form_data as ResumeFormData) || SAMPLE_RESUME_FORM_DATA,
     mode: 'onBlur',
   });
 
-  const { register, control, getValues, formState: { errors } } = form;
+  const { register, control, getValues, reset, formState: { errors } } = form;
 
   // Field Arrays
   const { fields: eduFields, append: appendEdu, remove: removeEdu } = useFieldArray({
@@ -164,15 +169,54 @@ export function GeneratorView() {
     compileFromValues(values);
   }, [getValues, compileFromValues]);
 
-  // Initial mount compilation
+  // Load exact resume by ID or from local storage drafts
   useEffect(() => {
-    handleUpdatePreview();
+    if (resumeId) {
+      setActiveResumeId(resumeId);
+      // 1. Check if local draft exists for this specific resume ID
+      const localDraft = localStorage.getItem(`resumeforge_generator_resume_${resumeId}`);
+      if (localDraft) {
+        try {
+          const parsed = JSON.parse(localDraft);
+          reset(parsed);
+          compileFromValues(parsed);
+        } catch {}
+      }
+
+      // 2. Fetch latest saved state from server
+      fetch(`/api/resumes/${resumeId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            if (data.data.title) setResumeTitle(data.data.title);
+            if (data.data.form_data && !localDraft) {
+              reset(data.data.form_data);
+              compileFromValues(data.data.form_data);
+            }
+          }
+        })
+        .catch(() => {});
+    } else {
+      // General generator without ID - check if previously edited draft exists
+      const lastSavedData = localStorage.getItem('resumeforge_generator_last_data');
+      const lastSavedTitle = localStorage.getItem('resumeforge_generator_last_title');
+      if (lastSavedData) {
+        try {
+          const parsed = JSON.parse(lastSavedData);
+          reset(parsed);
+          compileFromValues(parsed);
+        } catch {}
+      } else {
+        handleUpdatePreview();
+      }
+      if (lastSavedTitle) setResumeTitle(lastSavedTitle);
+    }
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, []);
+  }, [resumeId, reset, compileFromValues, handleUpdatePreview]);
 
   const handleStepChange = (newStep: number) => {
     setCurrentStep(newStep);
@@ -196,17 +240,42 @@ export function GeneratorView() {
     setIsSaving(true);
     try {
       const values = getValues();
-      await fetch('/api/resumes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: resumeTitle,
-          service_type: 'generator',
-          template_id: templates[0]?.id,
-          form_data: values,
-          raw_tex: generatedTex,
-        }),
-      });
+
+      // Save locally
+      if (activeResumeId) {
+        localStorage.setItem(`resumeforge_generator_resume_${activeResumeId}`, JSON.stringify(values));
+      }
+      localStorage.setItem('resumeforge_generator_last_data', JSON.stringify(values));
+      localStorage.setItem('resumeforge_generator_last_title', resumeTitle);
+
+      // Save to server
+      if (activeResumeId) {
+        await fetch(`/api/resumes/${activeResumeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: resumeTitle,
+            form_data: values,
+            raw_tex: generatedTex,
+          }),
+        });
+      } else {
+        const res = await fetch('/api/resumes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: resumeTitle,
+            service_type: 'generator',
+            template_id: templates[0]?.id,
+            form_data: values,
+            raw_tex: generatedTex,
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.data?.id) {
+          setActiveResumeId(data.data.id);
+        }
+      }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2500);
     } catch {
@@ -227,9 +296,6 @@ export function GeneratorView() {
             onChange={(e) => setResumeTitle(e.target.value)}
             className="h-8 w-72 text-xs font-semibold bg-transparent border-transparent hover:border-border focus:border-border px-2"
           />
-          <Badge variant="outline" className="text-[10px] uppercase font-mono text-muted-foreground border-border">
-            ATS Master Template
-          </Badge>
         </div>
 
         <div className="flex items-center gap-2">

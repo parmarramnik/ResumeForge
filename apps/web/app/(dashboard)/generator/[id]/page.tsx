@@ -9,7 +9,7 @@ export default async function GeneratorWithIdPage({
   const { id } = await params;
   return (
     <DashboardLayout noPadding>
-      <GeneratorView />
+      <GeneratorView resumeId={id} />
     </DashboardLayout>
   );
 }
