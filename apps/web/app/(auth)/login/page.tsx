@@ -31,11 +31,6 @@ function LoginForm() {
 
   const { register, handleSubmit, formState: { errors } } = form;
 
-  const handleGuestAccess = () => {
-    document.cookie = 'resumeforge_guest=true; path=/; SameSite=Lax';
-    router.push(redirectTarget);
-  };
-
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -59,7 +54,6 @@ function LoginForm() {
       }
 
       if (data.session) {
-        document.cookie = 'resumeforge_guest=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         router.push(redirectTarget);
         router.refresh();
       }
@@ -146,15 +140,6 @@ function LoginForm() {
             Create an account
           </Link>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleGuestAccess}
-          className="text-[11px] text-muted-foreground hover:text-foreground h-7"
-        >
-          Skip to Workspace (Guest Mode) →
-        </Button>
       </CardFooter>
     </Card>
   );

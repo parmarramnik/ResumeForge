@@ -33,11 +33,6 @@ function RegisterForm() {
 
   const { register, handleSubmit, formState: { errors } } = form;
 
-  const handleGuestAccess = () => {
-    document.cookie = 'resumeforge_guest=true; path=/; SameSite=Lax';
-    router.push(redirectTarget);
-  };
-
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -60,7 +55,7 @@ function RegisterForm() {
       if (!res.ok) {
         if (res.status === 429 || data.error?.toLowerCase().includes('rate limit')) {
           setIsRateLimited(true);
-          setErrorMessage('Registration rate limit reached. Please sign in or use Demo / Guest mode.');
+          setErrorMessage('Registration rate limit reached. Please try signing in.');
         } else {
           setErrorMessage(data.error || 'Failed to create account.');
         }
@@ -104,23 +99,9 @@ function RegisterForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {errorMessage && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium space-y-2">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{errorMessage}</span>
-              </div>
-              {isRateLimited && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGuestAccess}
-                  className="w-full h-7 text-xs font-semibold gap-1 bg-background text-foreground hover:bg-muted"
-                >
-                  <span>Continue with Demo / Guest Mode</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Button>
-              )}
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -214,15 +195,6 @@ function RegisterForm() {
             Sign in
           </Link>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleGuestAccess}
-          className="text-[11px] text-muted-foreground hover:text-foreground h-7"
-        >
-          Skip to Workspace (Guest Mode) →
-        </Button>
       </CardFooter>
     </Card>
   );

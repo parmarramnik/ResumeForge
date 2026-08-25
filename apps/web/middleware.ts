@@ -23,8 +23,6 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  const isGuest = request.cookies.get('resumeforge_guest')?.value === 'true';
-
   let user = null;
 
   // Only create Supabase client if valid credentials exist
@@ -68,8 +66,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/profile') ||
     pathname.startsWith('/settings');
 
-  // Protect routes unless logged in or in guest mode
-  if (!user && !isGuest && isProtectedRoute) {
+  // Protect routes requiring authenticated user
+  if (!user && isProtectedRoute) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(redirectUrl);

@@ -77,15 +77,15 @@ export default function ProfilePage() {
           setLinkedin(profile?.linkedin || '');
           setWebsite(profile?.website || '');
         } else {
-          setEmail('guest@resumeforge.dev');
-          setFullName('Guest User');
-          setTitle('Demo Mode');
-          setBio('Exploring ResumeForge in Guest / Demo mode.');
+          setEmail('user@resumeforge.dev');
+          setFullName('User');
+          setTitle('Software Engineer');
+          setBio('');
           setJoinedAt('Current Session');
         }
       } catch {
-        setEmail('guest@resumeforge.dev');
-        setFullName('Guest User');
+        setEmail('user@resumeforge.dev');
+        setFullName('User');
       } finally {
         setIsLoading(false);
       }

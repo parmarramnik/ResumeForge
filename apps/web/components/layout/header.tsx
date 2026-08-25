@@ -52,9 +52,9 @@ export function Header({ user }: HeaderProps) {
     }
   };
 
-  const displayName = user?.full_name || (user?.email ? user.email.split('@')[0] : 'Guest User');
-  const displayEmail = user?.email || 'Guest Workspace';
-  const initial = user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'G';
+  const displayName = user?.full_name || (user?.email ? user.email.split('@')[0] : 'User');
+  const displayEmail = user?.email || 'user@resumeforge.dev';
+  const initial = user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U';
 
   return (
     <>
