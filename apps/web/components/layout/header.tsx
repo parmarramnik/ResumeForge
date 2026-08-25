@@ -36,8 +36,13 @@ export function Header({ user }: HeaderProps) {
   return (
     <>
       <header className="h-14 border-b border-border bg-card px-6 flex items-center justify-end shrink-0">
-        {/* User Profile & Sign Out */}
         <div className="flex items-center gap-3">
+          {/* 1. Theme Button (First Position) */}
+          <div className="flex items-center pr-2 border-r border-border">
+            <ThemeToggle />
+          </div>
+
+          {/* 2. User Profile */}
           <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 rounded-md bg-muted text-foreground flex items-center justify-center text-xs font-semibold border border-border">
               {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
@@ -52,10 +57,7 @@ export function Header({ user }: HeaderProps) {
             </div>
           </Link>
 
-          <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
-            <ThemeToggle />
-          </div>
-
+          {/* 3. Sign Out Button */}
           <Button
             variant="ghost"
             size="icon"
