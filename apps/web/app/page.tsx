@@ -6,7 +6,6 @@ import {
   FileEdit,
   CheckCircle2,
   ArrowRight,
-  Sparkles,
   Download,
   FileCheck,
   Shield,
@@ -49,11 +48,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="py-20 lg:py-28 px-6 lg:px-12 max-w-4xl mx-auto text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/30 text-xs text-muted-foreground font-medium">
-          <Sparkles className="w-3.5 h-3.5 text-foreground" />
-          <span>Professional Resume Creation — 100% Free & ATS-Ready</span>
-        </div>
-
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
           Build standout resumes with simplicity and precision.
         </h1>
