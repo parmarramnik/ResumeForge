@@ -42,52 +42,50 @@ export default function RegisterPage() {
     setIsRateLimited(false);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            full_name: values.full_name,
-            role: 'USER',
-          },
-        },
+      // 1. Register user via server-side Admin API (bypasses public client SMTP rate limits)
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: values.full_name,
+          email: values.email,
+          password: values.password,
+        }),
       });
 
-      if (error) {
-        if (error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit') || error.status === 429) {
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 429 || data.error?.toLowerCase().includes('rate limit')) {
           setIsRateLimited(true);
-          setErrorMessage('Supabase auth signup rate limit reached. You can sign in with existing credentials or continue directly in Guest / Demo mode.');
-        } else if (error.message?.includes('User already registered')) {
-          setErrorMessage('An account with this email already exists. Please sign in instead.');
+          setErrorMessage('Registration rate limit reached. Please sign in or use Demo / Guest mode.');
         } else {
-          setErrorMessage(error.message);
+          setErrorMessage(data.error || 'Failed to create account.');
         }
         return;
       }
 
-      // If session exists immediately -> Go directly to dashboard
-      if (data?.session) {
-        router.push('/dashboard');
-        router.refresh();
+      // 2. Automatically log the user in immediately
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (signInError) {
+        setSuccessMessage('Account created successfully! Redirecting to sign in...');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
         return;
       }
 
-      // If email confirmation required -> Prompt user
-      if (data?.user && !data.session) {
-        setSuccessMessage('Account created! You can now sign in with your email and password.');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      }
+      setSuccessMessage('Account created! Entering workspace...');
+      router.push('/dashboard');
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
-        setIsRateLimited(true);
-        setErrorMessage('Auth service rate limit reached. Please sign in or use Demo / Guest mode.');
-      } else {
-        setErrorMessage(msg || 'Failed to register account. Please try again.');
-      }
+      setErrorMessage(msg || 'Failed to register account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +97,7 @@ export default function RegisterPage() {
         {/* Brand */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shadow-sm">
               <FileCode2 className="w-5 h-5" />
             </div>
             <span>ResumeForge</span>
@@ -107,11 +105,11 @@ export default function RegisterPage() {
           <p className="text-xs text-muted-foreground">Create your account to start building precision resumes</p>
         </div>
 
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm bg-card">
           <CardHeader className="space-y-1">
             <CardTitle className="text-lg font-semibold">Get started with ResumeForge</CardTitle>
             <CardDescription className="text-xs">
-              Access the LaTeX Maker IDE and the structured Template Generator
+              Access the Code Editor IDE and the structured Form Wizard
             </CardDescription>
           </CardHeader>
 
@@ -212,7 +210,7 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2">
+              <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2 bg-foreground text-background hover:bg-foreground/90">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
               </Button>
             </CardContent>
