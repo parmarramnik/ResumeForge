@@ -10,7 +10,7 @@ interface MonacoLatexEditorProps {
   onChange: (val: string) => void;
   onCompile?: () => void;
   errors?: CompileErrorDetail[];
-  theme?: 'vs-dark' | 'light';
+  theme?: 'vs-dark' | 'vs' | 'light' | 'dark';
   readOnly?: boolean;
   highlightLine?: number | null;
 }
@@ -20,7 +20,7 @@ export function MonacoLatexEditor({
   onChange,
   onCompile,
   errors = [],
-  theme = 'vs-dark',
+  theme = 'vs',
   readOnly = false,
   highlightLine = null,
 }: MonacoLatexEditorProps) {
@@ -30,7 +30,7 @@ export function MonacoLatexEditor({
   const handleEditorDidMount: OnMount = (ed, monaco) => {
     editorRef.current = ed;
 
-    // Register LaTeX snippets and syntax customizations if needed
+    // Register LaTeX compile shortcut (Ctrl+S / Cmd+S)
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       if (onCompile) {
         onCompile();
@@ -93,13 +93,15 @@ export function MonacoLatexEditor({
     }
   }, [errors]);
 
+  const monacoTheme = theme === 'dark' || theme === 'vs-dark' ? 'vs-dark' : 'vs';
+
   return (
-    <div className="w-full h-full border border-border rounded-lg overflow-hidden bg-[#1e1e1e]">
+    <div className="w-full h-full border-r border-border overflow-hidden bg-background">
       <Editor
         height="100%"
         defaultLanguage="latex"
         language="latex"
-        theme={theme}
+        theme={monacoTheme}
         value={value}
         onChange={(val) => onChange(val || '')}
         onMount={handleEditorDidMount}

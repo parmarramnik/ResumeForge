@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -8,10 +9,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'ResumeForge — Production-Quality LaTeX Resume Platform',
+  title: 'ResumeForge — Precision ATS Resume Platform',
   description:
-    'Professional resume platform with full LaTeX Monaco IDE, ATS-approved structured generator, and secure isolated compiler sandbox.',
-  keywords: ['Resume', 'LaTeX', 'ATS Resume', 'Resume Builder', 'Monaco LaTeX Editor', 'Tectonic'],
+    'Professional resume platform with full LaTeX Code Editor, ATS-approved structured generator, and secure isolated compiler sandbox.',
+  keywords: ['Resume', 'LaTeX', 'ATS Resume', 'Resume Builder', 'Monaco Code Editor', 'pdflatex'],
 };
 
 export default function RootLayout({
@@ -20,9 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased min-h-screen bg-background text-foreground`}>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

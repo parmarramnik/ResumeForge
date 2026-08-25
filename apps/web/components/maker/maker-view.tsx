@@ -21,13 +21,14 @@ import { Badge } from '@/components/ui/badge';
 import { ResumePdfViewer } from '@/components/pdf/resume-pdf-viewer';
 import { INITIAL_RAW_TEX } from '@/lib/supabase/mock-data';
 import { CompileErrorDetail, Resume } from '@resumeforge/shared-types';
+import { useTheme } from '@/components/theme/theme-provider';
 
 interface MonacoEditorComponentProps {
   value: string;
   onChange: (val: string) => void;
   onCompile?: () => void;
   errors?: CompileErrorDetail[];
-  theme?: 'vs-dark' | 'light';
+  theme?: 'vs-dark' | 'light' | 'vs';
   readOnly?: boolean;
   highlightLine?: number | null;
 }
@@ -35,7 +36,7 @@ interface MonacoEditorComponentProps {
 // Dynamically import Monaco editor to avoid SSR issues
 const MonacoLatexEditor = dynamic<MonacoEditorComponentProps>(
   () => import('@/components/editor/monaco-latex-editor').then((mod) => mod.MonacoLatexEditor),
-  { ssr: false, loading: () => <div className="h-full bg-[#18181b] flex items-center justify-center text-xs text-muted-foreground font-mono">Loading Monaco LaTeX Editor...</div> }
+  { ssr: false, loading: () => <div className="h-full bg-background flex items-center justify-center text-xs text-muted-foreground font-mono">Loading Code Editor...</div> }
 );
 
 interface MakerViewProps {
@@ -43,6 +44,7 @@ interface MakerViewProps {
 }
 
 export function MakerView({ initialResume }: MakerViewProps) {
+  const { theme } = useTheme();
   const [title, setTitle] = useState<string>(initialResume?.title || 'Software Engineer Resume — Arjun Mehta');
   const [texContent, setTexContent] = useState<string>(
     initialResume?.raw_tex || INITIAL_RAW_TEX
@@ -255,13 +257,14 @@ export function MakerView({ initialResume }: MakerViewProps) {
       {/* Main Split-Pane Workspace with Overleaf-Style Draggable Resizer */}
       <PanelGroup direction="horizontal" className="flex-1 overflow-hidden">
         {/* Left Pane: Monaco Code Editor */}
-        <Panel defaultSize={50} minSize={20} className="flex flex-col bg-[#141417] overflow-hidden">
+        <Panel defaultSize={50} minSize={20} className="flex flex-col bg-background overflow-hidden">
           <div className="flex-1 overflow-hidden">
             <MonacoLatexEditor
               value={texContent}
               onChange={(val) => setTexContent(val || '')}
               onCompile={handleCompile}
               errors={compileErrors}
+              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
               highlightLine={highlightLine}
             />
           </div>

@@ -6,6 +6,7 @@ import { UserProfile } from '@resumeforge/shared-types';
 import { Button } from '@/components/ui/button';
 import { LogOut, AlertCircle, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
@@ -50,6 +51,10 @@ export function Header({ user }: HeaderProps) {
               </span>
             </div>
           </Link>
+
+          <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
+            <ThemeToggle />
+          </div>
 
           <Button
             variant="ghost"
