@@ -4,223 +4,240 @@ import {
   FileCode2,
   Code,
   FileEdit,
-  ShieldCheck,
-  Zap,
   CheckCircle2,
   ArrowRight,
-  Terminal,
-  Cpu,
+  Sparkles,
+  Download,
+  FileCheck,
+  Shield,
   Layers,
-  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top Navbar */}
-      <header className="h-16 border-b border-border bg-card sticky top-0 z-50 px-6 lg:px-12 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded-md bg-foreground text-background flex items-center justify-center font-bold">
-            <FileCode2 className="w-4 h-4" />
+    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-muted">
+      {/* Top Navigation */}
+      <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 px-6 lg:px-12 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 font-bold text-base tracking-tight">
+          <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shadow-sm">
+            <FileCode2 className="w-4.5 h-4.5" />
           </div>
           <span>ResumeForge</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-muted-foreground">
-          <a href="#services" className="hover:text-foreground transition-colors">Services</a>
-          <a href="#features" className="hover:text-foreground transition-colors">Architecture</a>
-          <a href="#security" className="hover:text-foreground transition-colors">Security</a>
+        <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground">
+          <a href="#services" className="hover:text-foreground transition-colors">Our Services</a>
+          <a href="#benefits" className="hover:text-foreground transition-colors">Why ResumeForge</a>
+          <a href="#faq" className="hover:text-foreground transition-colors">Questions & Answers</a>
         </nav>
 
         <div className="flex items-center gap-3">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-xs font-medium">
+            <Button variant="ghost" size="sm" className="text-xs font-medium h-8">
               Sign In
             </Button>
           </Link>
-          <Link href="/dashboard">
-            <Button size="sm" className="text-xs font-medium bg-foreground text-background hover:bg-foreground/90">
-              Open Dashboard
+          <Link href="/register">
+            <Button size="sm" className="text-xs font-semibold h-8 bg-foreground text-background hover:bg-foreground/90 shadow-sm">
+              Create Free Account
             </Button>
           </Link>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 lg:py-28 px-6 lg:px-12 max-w-5xl mx-auto text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/40 text-xs font-medium">
-          <Badge variant="outline" className="text-[10px] font-mono border-border">LATEX ENGINE</Badge>
-          <span>Isolated TeX Live Compiler & High-Performance ATS Templates</span>
+      <section className="py-20 lg:py-28 px-6 lg:px-12 max-w-4xl mx-auto text-center space-y-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/30 text-xs text-muted-foreground font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-foreground" />
+          <span>Professional Resume Creation — 100% Free & ATS-Ready</span>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.15]">
-          Precision LaTeX Resume Platform
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
+          Build standout resumes with simplicity and precision.
         </h1>
 
         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Author raw LaTeX directly inside Monaco IDE or construct ATS-optimized resumes using a structured multi-step form editor.
+          Whether you love writing LaTeX code with full formatting control or prefer filling out an easy step-by-step form, ResumeForge makes building single-page resumes fast, elegant, and stress-free.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <Link href="/maker">
-            <Button size="lg" className="h-11 px-6 text-sm font-semibold gap-2 bg-foreground text-background hover:bg-foreground/90">
-              <Code className="w-4 h-4" />
-              <span>Resume Maker (LaTeX IDE)</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
+          <Link href="/register">
+            <Button size="lg" className="h-11 px-6 text-xs sm:text-sm font-semibold gap-2 bg-foreground text-background hover:bg-foreground/90 shadow">
+              <span>Start Building Your Resume</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-
-          <Link href="/generator">
-            <Button size="lg" variant="outline" className="h-11 px-6 text-sm font-semibold gap-2 border-border">
-              <FileEdit className="w-4 h-4" />
-              <span>Resume Generator (Form Wizard)</span>
+          <Link href="/login">
+            <Button size="lg" variant="outline" className="h-11 px-6 text-xs sm:text-sm font-medium border-border">
+              Sign In to Your Workspace
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Two Services Comparison */}
-      <section id="services" className="py-16 bg-muted/20 border-y border-border px-6 lg:px-12">
+      {/* Two Core Services Overview */}
+      <section id="services" className="py-20 bg-muted/20 border-y border-border px-6 lg:px-12">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Two Focused Workspaces</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Two Tailored Resume Services</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Choose between complete LaTeX control or structured template authoring.
+              Pick the workflow that fits your background and style best.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Service 1: Maker */}
-            <Card className="p-8 border-border bg-card shadow-none space-y-6 flex flex-col justify-between">
+            {/* Service 1: Resume Maker */}
+            <Card className="p-8 border-border bg-card shadow-sm rounded-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center font-bold">
-                  <Terminal className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shadow-sm">
+                  <Code className="w-5 h-5" />
                 </div>
                 <div>
-                  <Badge variant="outline" className="font-mono text-[10px] border-border">SERVICE 1</Badge>
-                  <h3 className="text-lg font-bold mt-2">Resume Maker</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    Designed for engineers and LaTeX practitioners who require complete control over formatting, macros, packages, and single-page ATS layout.
+                  <span className="text-[11px] font-mono text-muted-foreground uppercase font-semibold">Service 1</span>
+                  <h3 className="text-xl font-bold mt-1 text-foreground">Resume Maker (Code Editor)</h3>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    Designed for developers, engineers, and researchers who want full control over their LaTeX syntax, packages, custom macros, and exact document layout.
                   </p>
                 </div>
 
-                <ul className="space-y-2 text-xs font-medium text-muted-foreground pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Monaco editor with LaTeX syntax highlighting & line folding
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Instant sub-second compilation via native pdflatex engine
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Real-time error parser with line number diagnostics
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Draggable Overleaf-style split pane layout
-                  </li>
-                </ul>
+                <div className="space-y-2.5 text-xs text-muted-foreground pt-2">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Monaco code editor with syntax highlighting and keyboard shortcuts (<kbd className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">Ctrl+S</kbd>).</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Real-time PDF rendering with side-by-side interactive split preview.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Adjustable in-editor font sizing and quick template reset.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Download your compiled PDF or export the raw <code className="font-mono text-[11px]">.tex</code> source code anytime.</span>
+                  </div>
+                </div>
               </div>
 
-              <Link href="/maker">
-                <Button className="w-full text-xs font-semibold bg-foreground text-background hover:bg-foreground/90" size="sm">
-                  Launch Resume Maker
-                </Button>
-              </Link>
+              <div className="pt-2">
+                <Link href="/login?redirect=/maker">
+                  <Button className="w-full text-xs font-semibold h-9 bg-foreground text-background hover:bg-foreground/90">
+                    Sign In to Use Resume Maker
+                  </Button>
+                </Link>
+              </div>
             </Card>
 
-            {/* Service 2: Generator */}
-            <Card className="p-8 border-border bg-card shadow-none space-y-6 flex flex-col justify-between">
+            {/* Service 2: Resume Generator */}
+            <Card className="p-8 border-border bg-card shadow-sm rounded-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shadow-sm">
                   <FileEdit className="w-5 h-5" />
                 </div>
                 <div>
-                  <Badge variant="outline" className="font-mono text-[10px] border-border">SERVICE 2</Badge>
-                  <h3 className="text-lg font-bold mt-2">Resume Generator</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    Author professional resumes through a 7-step structured form wizard powered by ATS-standard single-page templates.
+                  <span className="text-[11px] font-mono text-muted-foreground uppercase font-semibold">Service 2</span>
+                  <h3 className="text-xl font-bold mt-1 text-foreground">Resume Generator (Form Wizard)</h3>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    Designed for anyone who wants a clean, high-impact resume without writing any code. Just enter your details and let ResumeForge handle the typography.
                   </p>
                 </div>
 
-                <ul className="space-y-2 text-xs font-medium text-muted-foreground pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Admin-controlled master LaTeX templates with versioning
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Dynamic repeatable sections (Education, Skills, Experience, Projects)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    Automatic LaTeX escaping sanitization preventing syntax errors
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                    One-click &quot;Open in Maker&quot; to inspect and customize LaTeX
-                  </li>
-                </ul>
+                <div className="space-y-2.5 text-xs text-muted-foreground pt-2">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>7 simple steps covering Personal Info, Education, Skills, Experience, Projects, and Achievements.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Automatic single-page layout optimization and clean typography spacing.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>Live instant preview as you fill out each section of your career profile.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
+                    <span>One-click &quot;Open in Maker&quot; button if you ever want to fine-tune the code later.</span>
+                  </div>
+                </div>
               </div>
 
-              <Link href="/generator">
-                <Button variant="outline" className="w-full text-xs font-semibold border-border" size="sm">
-                  Launch Resume Generator
-                </Button>
-              </Link>
+              <div className="pt-2">
+                <Link href="/login?redirect=/generator">
+                  <Button variant="outline" className="w-full text-xs font-semibold h-9 border-border">
+                    Sign In to Use Resume Generator
+                  </Button>
+                </Link>
+              </div>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Security & Isolation Section */}
-      <section id="security" className="py-20 px-6 lg:px-12 max-w-5xl mx-auto space-y-12">
+      {/* Humanized Benefits Section */}
+      <section id="benefits" className="py-20 px-6 lg:px-12 max-w-5xl mx-auto space-y-12">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Zero-Trust Architecture</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Engine Isolation & Security</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Why Job Seekers Love ResumeForge</h2>
           <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-            Secure, isolated execution sandbox with strict resource limits.
+            Everything you need to create clean, job-ready resumes that pass applicant tracking systems.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Card className="p-6 space-y-3 bg-card border-border shadow-none">
-            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-foreground">
-              <Cpu className="w-4 h-4" />
+          <Card className="p-6 space-y-3 bg-card border-border shadow-sm rounded-xl">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-foreground">
+              <FileCheck className="w-4.5 h-4.5" />
             </div>
-            <h3 className="font-semibold text-sm">Containerized Sandbox</h3>
+            <h3 className="font-semibold text-sm">ATS-Approved Formatting</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Every compile job executes in a dedicated ephemeral directory under non-root permissions with strict memory and CPU limits.
+              Standard fonts, clean hierarchy, and standard headings ensure your resume parses accurately in every recruiter software.
             </p>
           </Card>
 
-          <Card className="p-6 space-y-3 bg-card border-border shadow-none">
-            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-foreground">
-              <ShieldCheck className="w-4 h-4" />
+          <Card className="p-6 space-y-3 bg-card border-border shadow-sm rounded-xl">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-foreground">
+              <Download className="w-4.5 h-4.5" />
             </div>
-            <h3 className="font-semibold text-sm">Strict LaTeX Sanitization</h3>
+            <h3 className="font-semibold text-sm">Instant PDF & Source Export</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              User fields inserted into generator templates are rigorously escaped. Subprocesses are run with <span className="font-mono">--no-shell-escape</span>.
+              Download clean, high-resolution vector PDFs in seconds or export the full LaTeX source code to take with you anywhere.
             </p>
           </Card>
 
-          <Card className="p-6 space-y-3 bg-card border-border shadow-none">
-            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-foreground">
-              <Layers className="w-4 h-4" />
+          <Card className="p-6 space-y-3 bg-card border-border shadow-sm rounded-xl">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-foreground">
+              <Shield className="w-4.5 h-4.5" />
             </div>
-            <h3 className="font-semibold text-sm">PostgreSQL Row-Level Security</h3>
+            <h3 className="font-semibold text-sm">Private & Account Protected</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              All database operations are governed by Supabase RLS policies and server-side RBAC checks preventing cross-tenant access.
+              Your resume data is stored securely in your private account workspace. No third-party tracking, no watermarks, and no hidden fees.
             </p>
           </Card>
+        </div>
+      </section>
+
+      {/* Call to Action Banner */}
+      <section className="py-16 bg-muted/30 border-t border-border px-6 lg:px-12 text-center">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Ready to craft your next resume?</h2>
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+            Create an account in less than a minute and start building your resume today.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/register">
+              <Button size="lg" className="h-10 px-6 text-xs font-semibold bg-foreground text-background hover:bg-foreground/90">
+                Get Started Free
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button size="lg" variant="outline" className="h-10 px-6 text-xs font-medium border-border">
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -232,13 +249,13 @@ export default function LandingPage() {
               RF
             </div>
             <span className="font-semibold text-foreground">ResumeForge</span>
-            <span>-- Production LaTeX Resume Platform</span>
+            <span>— Precision Resume Platform</span>
           </div>
 
           <div className="flex items-center gap-6">
-            <Link href="/maker" className="hover:text-foreground transition-colors">Resume Maker</Link>
-            <Link href="/generator" className="hover:text-foreground transition-colors">Resume Generator</Link>
-            <Link href="/dashboard" className="hover:text-foreground transition-colors">Workspace</Link>
+            <Link href="/login?redirect=/maker" className="hover:text-foreground transition-colors">Resume Maker</Link>
+            <Link href="/login?redirect=/generator" className="hover:text-foreground transition-colors">Resume Generator</Link>
+            <Link href="/login" className="hover:text-foreground transition-colors">Sign In</Link>
           </div>
         </div>
       </footer>

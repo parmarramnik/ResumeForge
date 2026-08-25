@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,8 +16,11 @@ import { createClient } from '@/lib/supabase/client';
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/dashboard';
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -29,9 +32,8 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = form;
 
   const handleGuestAccess = () => {
-    // Set a session-only cookie without persistence
     document.cookie = 'resumeforge_guest=true; path=/; SameSite=Lax';
-    router.push('/dashboard');
+    router.push(redirectTarget);
   };
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -57,9 +59,8 @@ export default function LoginPage() {
       }
 
       if (data.session) {
-        // Clear any leftover guest cookies
         document.cookie = 'resumeforge_guest=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        router.push('/dashboard');
+        router.push(redirectTarget);
         router.refresh();
       }
     } catch (err: unknown) {
@@ -69,6 +70,97 @@ export default function LoginPage() {
     }
   };
 
+  return (
+    <Card className="border-border shadow-sm bg-card">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-lg font-semibold">Welcome back</CardTitle>
+        <CardDescription className="text-xs">
+          Sign in to access your resumes and continue editing
+        </CardDescription>
+      </CardHeader>
+
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <CardContent className="space-y-4">
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Email address</Label>
+            <div className="relative">
+              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                {...register('email')}
+                type="email"
+                placeholder="name@example.com"
+                className="pl-9 text-xs"
+                autoComplete="email"
+              />
+            </div>
+            {errors.email && (
+              <p className="text-[11px] text-destructive">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                {...register('password')}
+                type="password"
+                placeholder="••••••••"
+                className="pl-9 text-xs"
+                autoComplete="current-password"
+              />
+            </div>
+            {errors.password && (
+              <p className="text-[11px] text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+
+          <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2 bg-foreground text-background hover:bg-foreground/90">
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
+          </Button>
+        </CardContent>
+      </form>
+
+      <CardFooter className="flex flex-col gap-2 border-t border-border/50 pt-4 text-xs text-muted-foreground">
+        <div className="flex justify-center">
+          <span>Don&apos;t have an account?</span>
+          <Link
+            href={redirectTarget !== '/dashboard' ? `/register?redirect=${encodeURIComponent(redirectTarget)}` : '/register'}
+            className="ml-1 font-semibold text-foreground hover:underline"
+          >
+            Create an account
+          </Link>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleGuestAccess}
+          className="text-[11px] text-muted-foreground hover:text-foreground h-7"
+        >
+          Skip to Workspace (Guest Mode) →
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-muted/20">
       <div className="w-full max-w-md space-y-6">
@@ -80,92 +172,12 @@ export default function LoginPage() {
             </div>
             <span>ResumeForge</span>
           </Link>
-          <p className="text-xs text-muted-foreground">Sign in to your professional resume workspace</p>
+          <p className="text-xs text-muted-foreground">Sign in to your resume workspace</p>
         </div>
 
-        <Card className="border-border shadow-sm bg-card">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-lg font-semibold">Welcome back</CardTitle>
-            <CardDescription className="text-xs">
-              Enter your credentials to access Maker and Generator services
-            </CardDescription>
-          </CardHeader>
-
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              {errorMessage && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Email address</Label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    {...register('email')}
-                    type="email"
-                    placeholder="name@example.com"
-                    className="pl-9 text-xs"
-                    autoComplete="email"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-[11px] text-destructive">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    {...register('password')}
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-9 text-xs"
-                    autoComplete="current-password"
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-[11px] text-destructive">{errors.password.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2 bg-foreground text-background hover:bg-foreground/90">
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
-              </Button>
-            </CardContent>
-          </form>
-
-          <CardFooter className="flex flex-col gap-2 border-t border-border/50 pt-4 text-xs text-muted-foreground">
-            <div className="flex justify-center">
-              <span>Don&apos;t have an account?</span>
-              <Link href="/register" className="ml-1 font-semibold text-foreground hover:underline">
-                Create an account
-              </Link>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleGuestAccess}
-              className="text-[11px] text-muted-foreground hover:text-foreground h-7"
-            >
-              Skip to Workspace (Guest Mode) →
-            </Button>
-          </CardFooter>
-        </Card>
+        <Suspense fallback={<div className="h-64 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
