@@ -3,7 +3,13 @@ import { compileRequestSchema } from '@resumeforge/validation';
 import { checkRateLimit } from '@/lib/security/rate-limiter';
 import crypto from 'crypto';
 
-const COMPILER_URL = process.env.COMPILER_SERVICE_URL || 'http://localhost:8000';
+// Candidates for compiler microservice endpoint
+const CANDIDATE_URLS = [
+  process.env.COMPILER_SERVICE_URL,
+  'http://compiler:8000',
+  'http://127.0.0.1:8000',
+  'http://localhost:8000',
+].filter(Boolean) as string[];
 
 // High-speed in-memory compilation cache (up to 100 recent documents)
 const pdfCache = new Map<string, { buffer: ArrayBuffer; duration: string; engine: string }>();
@@ -64,72 +70,81 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Proxy to Isolated LaTeX Compiler Microservice
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // 4. Proxy to Isolated LaTeX Compiler Microservice with Auto-Failover
+    let lastError: Error | null = null;
 
-      const compilerRes = await fetch(`${COMPILER_URL}/compile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tex,
-          engine: requestedEngine,
-          return_base64: false,
-        }),
-        signal: controller.signal,
-      });
+    for (const baseUrl of CANDIDATE_URLS) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      clearTimeout(timeoutId);
-
-      if (compilerRes.ok) {
-        const pdfArrayBuffer = await compilerRes.arrayBuffer();
-        const duration = compilerRes.headers.get('x-duration-ms') || '0';
-        const usedEngine = compilerRes.headers.get('x-compiler-engine') || requestedEngine;
-
-        // Store in cache (evict oldest if cache exceeds 100 items)
-        if (pdfCache.size >= 100) {
-          const firstKey = pdfCache.keys().next().value;
-          if (firstKey) pdfCache.delete(firstKey);
-        }
-        pdfCache.set(cacheKey, { buffer: pdfArrayBuffer, duration, engine: usedEngine });
-
-        return new NextResponse(pdfArrayBuffer, {
-          status: 200,
+        const compilerRes = await fetch(`${baseUrl}/compile`, {
+          method: 'POST',
           headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'inline; filename=resume.pdf',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'X-Duration-Ms': duration,
-            'X-Compiler-Engine': usedEngine,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            tex,
+            engine: requestedEngine,
+            return_base64: false,
+          }),
+          signal: controller.signal,
         });
-      }
 
-      // Handle LaTeX syntax error response
-      const errJson = await compilerRes.json().catch(() => ({}));
-      return NextResponse.json(
-        {
-          success: false,
-          error: errJson.error || 'LaTeX compilation failed.',
-          line: errJson.line,
-          errors: errJson.errors || [],
-          raw_log: errJson.raw_log,
-        },
-        { status: compilerRes.status || 422 }
-      );
-    } catch (fetchErr: unknown) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'LaTeX Compiler microservice is unreachable. Please make sure the compiler container is running on port 8000.',
-          detail: fetchErr instanceof Error ? fetchErr.message : String(fetchErr),
-        },
-        { status: 503 }
-      );
+        clearTimeout(timeoutId);
+
+        if (compilerRes.ok) {
+          const pdfArrayBuffer = await compilerRes.arrayBuffer();
+          const duration = compilerRes.headers.get('x-duration-ms') || '0';
+          const usedEngine = compilerRes.headers.get('x-compiler-engine') || requestedEngine;
+
+          // Store in cache (evict oldest if cache exceeds 100 items)
+          if (pdfCache.size >= 100) {
+            const firstKey = pdfCache.keys().next().value;
+            if (firstKey) pdfCache.delete(firstKey);
+          }
+          pdfCache.set(cacheKey, { buffer: pdfArrayBuffer, duration, engine: usedEngine });
+
+          return new NextResponse(pdfArrayBuffer, {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Content-Disposition': 'inline; filename=resume.pdf',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'X-Duration-Ms': duration,
+              'X-Compiler-Engine': usedEngine,
+            },
+          });
+        }
+
+        // If compiler responded with LaTeX syntax error (422)
+        const errJson = await compilerRes.json().catch(() => ({}));
+        return NextResponse.json(
+          {
+            success: false,
+            error: errJson.error || 'LaTeX compilation failed.',
+            line: errJson.line,
+            errors: errJson.errors || [],
+            raw_log: errJson.raw_log,
+          },
+          { status: compilerRes.status || 422 }
+        );
+      } catch (fetchErr: unknown) {
+        lastError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
+        // Try next candidate URL in loop
+        continue;
+      }
     }
+
+    // If all candidate URLs failed to connect
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'LaTeX Compiler microservice is unreachable. Please make sure the compiler service is running on port 8000.',
+        detail: lastError?.message || 'Connection refused on all compiler endpoints',
+      },
+      { status: 503 }
+    );
   } catch (err: unknown) {
     return NextResponse.json(
       {

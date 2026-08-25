@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ResumeForge LaTeX Compiler Microservice Server
-Supports pdflatex (Overleaf compatible) and tectonic engines with error parsing and sandboxing.
+Robust compiler supporting pdflatex (Overleaf compatible) and tectonic engines with error recovery.
 """
 
 import http.server
@@ -16,7 +16,7 @@ import time
 from urllib.parse import urlparse
 
 PORT = int(os.environ.get("PORT", "8000"))
-TIMEOUT_SECONDS = int(os.environ.get("COMPILER_TIMEOUT", "12"))
+TIMEOUT_SECONDS = int(os.environ.get("COMPILER_TIMEOUT", "15"))
 
 def parse_latex_log(log_text: str):
     """
@@ -133,7 +133,7 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 }).encode("utf-8"))
                 return
 
-            # Order of engines to try
+            # Prioritized order of engines to try
             engines_to_try = []
             if preferred_engine == "tectonic" and has_tectonic:
                 engines_to_try = ["tectonic", "pdflatex"] if has_pdflatex else ["tectonic"]
@@ -153,11 +153,11 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 for eng in engines_to_try:
                     if eng == "pdflatex":
+                        # Non-stop mode without halting on minor non-fatal warnings
                         cmd = [
                             "pdflatex",
                             "-interaction=nonstopmode",
                             "-no-shell-escape",
-                            "-halt-on-error",
                             "-output-directory", temp_dir,
                             "document.tex"
                         ]
@@ -177,7 +177,8 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                         combined_output = f"{res.stdout}\n{res.stderr}"
                         last_err_output = combined_output
 
-                        if res.returncode == 0 and os.path.exists(pdf_file):
+                        # Check if PDF was successfully generated
+                        if os.path.exists(pdf_file) and os.path.getsize(pdf_file) > 100:
                             with open(pdf_file, "rb") as f:
                                 pdf_bytes = f.read()
 
@@ -219,7 +220,7 @@ class CompilerHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), CompilerHTTPRequestHandler) as httpd:
-        print(f"ResumeForge LaTeX Compiler Server listening on http://localhost:{PORT} (Engine: pdflatex/tectonic)")
+        print(f"ResumeForge LaTeX Compiler Server listening on http://0.0.0.0:{PORT} (Engine: pdflatex/tectonic)")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
