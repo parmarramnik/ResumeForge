@@ -251,19 +251,17 @@ export function MakerView({ resumeId, initialResume }: MakerViewProps) {
     <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-background overflow-hidden select-none">
       {/* Top IDE Toolbar */}
       <div className="h-12 border-b border-border bg-card px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-foreground" />
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-7 text-xs font-semibold w-52 md:w-64 bg-transparent border-transparent hover:border-border focus:border-border focus:bg-background px-2"
+              className="h-7 text-xs font-semibold w-48 sm:w-60 bg-transparent border-transparent hover:border-border focus:border-border focus:bg-background px-2"
             />
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {/* Font Size Adjuster in Toolbar */}
+          {/* Font Size Adjuster right beside resume name */}
           <div className="flex items-center gap-1 bg-muted/60 border border-border rounded-md px-1.5 py-0.5" title="Adjust Editor Font Size (or use Ctrl+Wheel)">
             <button
               onClick={() => handleUpdateFontSize(-1)}
@@ -285,6 +283,9 @@ export function MakerView({ resumeId, initialResume }: MakerViewProps) {
               <Plus className="w-3 h-3" />
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
 
           <Button
             variant="ghost"
