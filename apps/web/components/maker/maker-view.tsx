@@ -45,7 +45,7 @@ interface MakerViewProps {
 
 export function MakerView({ initialResume }: MakerViewProps) {
   const { theme } = useTheme();
-  const [title, setTitle] = useState<string>(initialResume?.title || 'Software Engineer Resume — Arjun Mehta');
+  const [title, setTitle] = useState<string>(initialResume?.title || 'Professional Resume — Draft');
   const [texContent, setTexContent] = useState<string>(
     initialResume?.raw_tex || INITIAL_RAW_TEX
   );

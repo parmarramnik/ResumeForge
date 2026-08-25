@@ -31,7 +31,7 @@ export default function RegisterPage() {
   const { register, handleSubmit, formState: { errors } } = form;
 
   const handleGuestAccess = () => {
-    document.cookie = 'resumeforge_guest=true; path=/; max-age=86400';
+    document.cookie = 'resumeforge_guest=true; path=/; SameSite=Lax';
     router.push('/dashboard');
   };
 
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                   <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     {...register('full_name')}
-                    placeholder="Arjun Mehta"
+                    placeholder="Your Full Name"
                     className="pl-9 text-xs"
                     autoComplete="name"
                   />

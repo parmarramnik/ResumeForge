@@ -8,6 +8,7 @@ import { LogOut, AlertCircle, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { useRouter } from 'next/navigation';
+import { clearCachedUserProfile } from './dashboard-layout';
 
 interface HeaderProps {
   user?: UserProfile | null;
@@ -23,8 +24,26 @@ export function Header({ user }: HeaderProps) {
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
-      document.cookie = 'resumeforge_guest=; path=/; max-age=0';
+      
+      // Clear all guest and auth cookies completely
+      document.cookie = 'resumeforge_guest=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'sb-access-token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'sb-refresh-token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+      // Clear any Supabase local storage keys
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-') || key.startsWith('resumeforge_guest')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
+      // Clear in-memory profile cache
+      clearCachedUserProfile();
+      
       router.push('/login');
+      router.refresh();
     } catch {
       router.push('/login');
     } finally {
@@ -32,6 +51,10 @@ export function Header({ user }: HeaderProps) {
       setShowLogoutModal(false);
     }
   };
+
+  const displayName = user?.full_name || (user?.email ? user.email.split('@')[0] : 'Guest User');
+  const displayEmail = user?.email || 'Guest Workspace';
+  const initial = user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'G';
 
   return (
     <>
@@ -45,14 +68,14 @@ export function Header({ user }: HeaderProps) {
           {/* 2. User Profile */}
           <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 rounded-md bg-muted text-foreground flex items-center justify-center text-xs font-semibold border border-border">
-              {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              {initial}
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-medium leading-none truncate max-w-[140px]">
-                {user?.full_name || user?.email || 'Arjun Mehta'}
+                {displayName}
               </span>
               <span className="text-[10px] text-muted-foreground leading-none mt-1">
-                {user?.email || 'arjun.mehta.dev@example.com'}
+                {displayEmail}
               </span>
             </div>
           </Link>

@@ -68,27 +68,27 @@ export default function ProfilePage() {
             .eq('id', user.id)
             .maybeSingle();
 
-          setFullName(profile?.full_name || user.user_metadata?.full_name || 'Arjun Mehta');
-          setTitle(profile?.title || 'Senior Software Engineer');
-          setPhone(profile?.phone || '+1 (555) 234-5678');
-          setLocation(profile?.location || 'San Francisco, CA');
-          setBio(profile?.bio || 'Full-stack software engineer specialized in distributed systems, modern web architectures, and cloud microservices.');
-          setGithub(profile?.github || 'https://github.com/developer');
-          setLinkedin(profile?.linkedin || 'https://linkedin.com/in/developer');
-          setWebsite(profile?.website || 'https://developer.me');
+          setFullName(profile?.full_name || user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User'));
+          setTitle(profile?.title || 'Software Engineer');
+          setPhone(profile?.phone || '');
+          setLocation(profile?.location || '');
+          setBio(profile?.bio || '');
+          setGithub(profile?.github || '');
+          setLinkedin(profile?.linkedin || '');
+          setWebsite(profile?.website || '');
         } else {
           // Guest / Demo fallback
           setEmail('guest@resumeforge.dev');
-          setFullName('Arjun Mehta');
-          setTitle('Senior Software Engineer');
-          setPhone('+1 (555) 234-5678');
-          setLocation('San Francisco, CA');
-          setBio('Full-stack engineer with expertise in Next.js, TypeScript, and microservice infrastructure.');
-          setJoinedAt('Aug 2026');
+          setFullName('Guest User');
+          setTitle('Demo Mode');
+          setPhone('');
+          setLocation('');
+          setBio('Exploring ResumeForge in Guest / Demo mode.');
+          setJoinedAt('Current Session');
         }
       } catch {
         setEmail('guest@resumeforge.dev');
-        setFullName('Arjun Mehta');
+        setFullName('Guest User');
       } finally {
         setIsLoading(false);
       }
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                       <Input
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Arjun Mehta"
+                        placeholder="Your Full Name"
                         className="text-xs pl-9"
                       />
                     </div>

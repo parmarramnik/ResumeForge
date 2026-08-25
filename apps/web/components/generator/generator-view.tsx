@@ -49,7 +49,7 @@ export function GeneratorView() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [templates] = useState<Template[]>(INITIAL_TEMPLATES);
-  const [resumeTitle, setResumeTitle] = useState<string>('Software Engineer Resume — Arjun Mehta');
+  const [resumeTitle, setResumeTitle] = useState<string>('Professional Resume — Draft');
   const [generatedTex, setGeneratedTex] = useState<string>('');
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
@@ -313,39 +313,39 @@ export function GeneratorView() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">Full Name *</Label>
-                    <Input {...register('personal.name')} placeholder="Arjun Mehta" className="text-xs h-8" />
+                    <Input {...register('personal.name')} placeholder="Jane Doe" className="text-xs h-8" />
                     {errors.personal?.name && <p className="text-[11px] text-destructive">{errors.personal.name.message}</p>}
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">Email Address *</Label>
-                    <Input {...register('personal.email')} placeholder="arjun.mehta.dev@example.com" className="text-xs h-8" />
+                    <Input {...register('personal.email')} placeholder="jane.doe@example.com" className="text-xs h-8" />
                     {errors.personal?.email && <p className="text-[11px] text-destructive">{errors.personal.email.message}</p>}
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">Phone Number</Label>
-                    <Input {...register('personal.phone')} placeholder="+91 9876543210" className="text-xs h-8" />
+                    <Input {...register('personal.phone')} placeholder="+1 (555) 012-3456" className="text-xs h-8" />
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">Location</Label>
-                    <Input {...register('personal.location')} placeholder="Ahmedabad, Gujarat" className="text-xs h-8" />
+                    <Input {...register('personal.location')} placeholder="City, State" className="text-xs h-8" />
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">LinkedIn URL</Label>
-                    <Input {...register('personal.linkedin')} placeholder="https://www.linkedin.com/in/arjun-mehta-dev/" className="text-xs h-8" />
+                    <Input {...register('personal.linkedin')} placeholder="https://linkedin.com/in/username" className="text-xs h-8" />
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
                     <Label className="text-xs font-medium">GitHub URL</Label>
-                    <Input {...register('personal.github')} placeholder="https://github.com/arjunmehta-dev" className="text-xs h-8" />
+                    <Input {...register('personal.github')} placeholder="https://github.com/username" className="text-xs h-8" />
                   </div>
 
                   <div className="space-y-1.5 col-span-2">
                     <Label className="text-xs font-medium">Portfolio / Website URL</Label>
-                    <Input {...register('personal.portfolio')} placeholder="https://arjunmehta.dev/" className="text-xs h-8" />
+                    <Input {...register('personal.portfolio')} placeholder="https://yourportfolio.com" className="text-xs h-8" />
                   </div>
                 </div>
               </div>

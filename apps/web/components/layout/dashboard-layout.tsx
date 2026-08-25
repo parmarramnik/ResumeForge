@@ -13,8 +13,12 @@ interface DashboardLayoutProps {
   noPadding?: boolean;
 }
 
-// Global in-memory user cache to prevent re-fetching on every page navigation
+// In-memory user cache
 let cachedUserProfile: UserProfile | null = null;
+
+export function clearCachedUserProfile() {
+  cachedUserProfile = null;
+}
 
 export function DashboardLayout({ children, initialUser, noPadding = false }: DashboardLayoutProps) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(
@@ -22,25 +26,51 @@ export function DashboardLayout({ children, initialUser, noPadding = false }: Da
   );
 
   useEffect(() => {
-    // If already cached, don't block
-    if (!cachedUserProfile) {
-      const supabase = createClient();
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          const profile: UserProfile = {
-            id: user.id,
-            email: user.email || null,
-            full_name: user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User'),
-            role: 'USER',
-            avatar_url: null,
-            created_at: user.created_at,
-            updated_at: user.created_at,
-          };
-          cachedUserProfile = profile;
-          setCurrentUser(profile);
-        }
-      });
-    }
+    const supabase = createClient();
+
+    // Fetch current user if not in memory
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const profile: UserProfile = {
+          id: user.id,
+          email: user.email || null,
+          full_name: user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User'),
+          role: 'USER',
+          avatar_url: null,
+          created_at: user.created_at,
+          updated_at: user.created_at,
+        };
+        cachedUserProfile = profile;
+        setCurrentUser(profile);
+      } else {
+        cachedUserProfile = null;
+        setCurrentUser(null);
+      }
+    });
+
+    // Listen to real-time auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const profile: UserProfile = {
+          id: session.user.id,
+          email: session.user.email || null,
+          full_name: session.user.user_metadata?.full_name || (session.user.email ? session.user.email.split('@')[0] : 'User'),
+          role: 'USER',
+          avatar_url: null,
+          created_at: session.user.created_at,
+          updated_at: session.user.created_at,
+        };
+        cachedUserProfile = profile;
+        setCurrentUser(profile);
+      } else {
+        cachedUserProfile = null;
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

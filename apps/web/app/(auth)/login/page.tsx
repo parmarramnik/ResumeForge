@@ -29,7 +29,8 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = form;
 
   const handleGuestAccess = () => {
-    document.cookie = 'resumeforge_guest=true; path=/; max-age=86400';
+    // Set a session-only cookie without persistence
+    document.cookie = 'resumeforge_guest=true; path=/; SameSite=Lax';
     router.push('/dashboard');
   };
 
@@ -56,6 +57,8 @@ export default function LoginPage() {
       }
 
       if (data.session) {
+        // Clear any leftover guest cookies
+        document.cookie = 'resumeforge_guest=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         router.push('/dashboard');
         router.refresh();
       }
@@ -72,7 +75,7 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shadow-sm">
               <FileCode2 className="w-5 h-5" />
             </div>
             <span>ResumeForge</span>
@@ -80,7 +83,7 @@ export default function LoginPage() {
           <p className="text-xs text-muted-foreground">Sign in to your professional resume workspace</p>
         </div>
 
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm bg-card">
           <CardHeader className="space-y-1">
             <CardTitle className="text-lg font-semibold">Welcome back</CardTitle>
             <CardDescription className="text-xs">
@@ -139,7 +142,7 @@ export default function LoginPage() {
                 )}
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2">
+              <Button type="submit" disabled={isLoading} className="w-full text-xs font-semibold h-9 mt-2 bg-foreground text-background hover:bg-foreground/90">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
               </Button>
             </CardContent>
